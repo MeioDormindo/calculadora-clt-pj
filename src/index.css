@@ -1,0 +1,1013 @@
+/* Paleta de dados validada (checks de CVD/contraste em modo claro e escuro):
+   CLT = azul, PJ = laranja; verde/vermelho reservados para status. */
+:root {
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-sunken: #f2f1ec;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-muted: #898781;
+  --border: rgba(11, 11, 11, 0.1);
+  --border-strong: #e1e0d9;
+  --clt: #2a78d6;
+  --pj: #eb6834;
+  --good: #0ca30c;
+  --critical: #d03b3b;
+  --shadow-sm: 0 1px 2px rgba(11, 11, 11, 0.05);
+  --shadow-md: 0 4px 16px -4px rgba(11, 11, 11, 0.1);
+  --shadow-lg: 0 12px 32px -12px rgba(11, 11, 11, 0.18);
+
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 14px;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  color-scheme: light;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  background: var(--page);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-sunken: #131312;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --ink-muted: #898781;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: #2c2c2a;
+    --clt: #3987e5;
+    --pj: #d95926;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 32px -12px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Itens de grid/flex têm min-width automático e se recusam a encolher abaixo do
+   próprio conteúdo (um <select> com opção longa, por exemplo), estourando o
+   contêiner. Zerar isso é o que mantém as colunas dentro da página. */
+.input-grid > *,
+.tiles > *,
+.analysis-grid > *,
+.breakdown > *,
+.field-row > *,
+.field,
+.field-control,
+.table-scroll {
+  min-width: 0;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    radial-gradient(900px 420px at 50% -220px, color-mix(in oklab, var(--clt) 12%, transparent), transparent),
+    var(--page);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-sunken);
+  color: var(--ink-2);
+}
+
+/* ---------- shell ---------- */
+
+.app-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.app-shell-results {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.app-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.app-header h1 {
+  font-size: clamp(30px, 6vw, 44px);
+  line-height: 1.1;
+}
+
+.app-header .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header .tag .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.app-header p.lead {
+  max-width: 54ch;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- cards ---------- */
+
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow 0.25s var(--ease),
+    transform 0.25s var(--ease),
+    border-color 0.25s var(--ease);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card:focus-within {
+  border-color: color-mix(in oklab, var(--accent, var(--clt)) 45%, var(--border));
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+
+.card-title .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-bottom: 18px;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.card.clt {
+  --accent: var(--clt);
+}
+
+.card.pj {
+  --accent: var(--pj);
+}
+
+/* ---------- fields ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: none;
+  font-family: inherit;
+}
+
+.badge.auto {
+  color: var(--accent, var(--clt));
+  background: color-mix(in oklab, var(--accent, var(--clt)) 13%, transparent);
+}
+
+.badge.reset {
+  color: var(--ink-2);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.badge.reset:hover {
+  color: var(--accent, var(--clt));
+  border-color: var(--accent, var(--clt));
+}
+
+.field-control.is-auto input {
+  color: var(--ink-2);
+}
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  transition:
+    border-color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
+    background-color 0.18s var(--ease);
+}
+
+.field-control:focus-within {
+  background: var(--surface);
+  border-color: var(--accent, var(--clt));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent, var(--clt)) 20%, transparent);
+}
+
+.field-affix {
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  flex: none;
+  user-select: none;
+}
+
+.field-affix.trailing {
+  padding-inline: 10px 12px;
+}
+
+.field-control input,
+.field-control select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  outline: none;
+  padding: 11px 12px;
+  min-height: 44px;
+}
+
+.field-affix + input {
+  padding-inline-start: 0;
+}
+
+.field-control input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.field-control input::-webkit-outer-spin-button,
+.field-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field-control.select {
+  position: relative;
+}
+
+.field-control.select::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-muted);
+  border-bottom: 2px solid var(--ink-muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.field-control select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 34px;
+}
+
+/* O popup nativo herda as cores do <select>. Como o campo é transparente,
+   as opções precisam de fundo e texto explícitos para não sumirem. */
+.field-control select option {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ---------- toggle ---------- */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 8px 0;
+  min-height: 44px;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  flex: none;
+  width: 40px;
+  height: 23px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  padding: 2px;
+  transition: background-color 0.22s var(--ease), border-color 0.22s var(--ease);
+}
+
+.toggle-thumb {
+  display: block;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.22s var(--ease), background-color 0.22s var(--ease);
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--accent, var(--clt));
+  border-color: var(--accent, var(--clt));
+}
+
+.toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(17px);
+  background: #fff;
+}
+
+.toggle input:focus-visible + .toggle-track {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent, var(--clt)) 25%, transparent);
+}
+
+/* ---------- collapsible group ---------- */
+
+.group {
+  border: 1px solid color-mix(in oklab, var(--accent, var(--clt)) 22%, var(--border));
+  border-radius: 10px;
+  margin-bottom: 14px;
+  background: color-mix(in oklab, var(--accent, var(--clt)) 5%, transparent);
+  overflow: hidden;
+}
+
+.group summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent, var(--clt));
+  list-style: none;
+  transition: background-color 0.18s var(--ease);
+}
+
+.group summary::-webkit-details-marker {
+  display: none;
+}
+
+.group summary:hover {
+  background: color-mix(in oklab, var(--accent, var(--clt)) 9%, transparent);
+}
+
+.group summary::after {
+  content: "";
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+  transition: transform 0.22s var(--ease);
+}
+
+.group[open] summary::after {
+  transform: rotate(-135deg);
+}
+
+.group-body {
+  padding: 4px 14px 2px;
+  animation: slide-down 0.22s var(--ease);
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- hero (breakeven) ---------- */
+
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in oklab, var(--pj) 30%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--pj) 9%, transparent), transparent 70%),
+    var(--surface);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.hero-label {
+  font-size: 13px;
+  color: var(--ink-2);
+  max-width: 46ch;
+  margin: 0 auto;
+}
+
+.hero-figure {
+  font-size: clamp(40px, 10vw, 60px);
+  font-weight: 650;
+  line-height: 1.05;
+  color: var(--ink);
+  margin: 10px 0 6px;
+  letter-spacing: -0.03em;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.hero.unreachable .hero-figure {
+  font-size: clamp(22px, 5vw, 28px);
+  color: var(--critical);
+}
+
+/* ---------- stat tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tile-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.tile-label .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.dot.clt {
+  background: var(--clt);
+}
+
+.dot.pj {
+  background: var(--pj);
+}
+
+.tile-value {
+  font-size: clamp(22px, 4.4vw, 28px);
+  font-weight: 620;
+  color: var(--ink);
+  margin: 8px 0 2px;
+  letter-spacing: -0.02em;
+}
+
+.tile-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.tile-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-top: 8px;
+}
+
+.tile-delta.good {
+  color: var(--good);
+  background: color-mix(in oklab, var(--good) 13%, transparent);
+}
+
+.tile-delta.bad {
+  color: var(--critical);
+  background: color-mix(in oklab, var(--critical) 13%, transparent);
+}
+
+/* ---------- meter ---------- */
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.meter-key {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.meter-key .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.meter-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter-track {
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+  overflow: hidden;
+}
+
+.meter-track.clt {
+  background: color-mix(in oklab, var(--clt) 15%, transparent);
+}
+
+.meter-track.pj {
+  background: color-mix(in oklab, var(--pj) 15%, transparent);
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  transition: width 0.45s var(--ease);
+}
+
+.meter-fill.clt {
+  background: var(--clt);
+}
+
+.meter-fill.pj {
+  background: var(--pj);
+}
+
+/* ---------- alerta ---------- */
+
+.alert {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  background: color-mix(in oklab, var(--critical) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--critical) 35%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+/* ---------- tabelas ---------- */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* Só aparece onde a tabela realmente não cabe inteira. */
+.scroll-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 9px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.comparison-table thead th .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.comparison-table th:first-child,
+.comparison-table tbody th[scope="row"],
+.comparison-table tfoot th[scope="row"] {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  color: var(--ink-2);
+  white-space: normal;
+  min-width: 170px;
+}
+
+.comparison-table td.negative {
+  color: var(--ink-muted);
+}
+
+.comparison-table td.empty {
+  color: var(--border-strong);
+}
+
+.comparison-table td.good {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.comparison-table td.bad {
+  color: var(--critical);
+  font-weight: 600;
+}
+
+.comparison-table tfoot th,
+.comparison-table tfoot td {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  border-bottom: none;
+  border-top: 2px solid var(--border-strong);
+  padding-top: 13px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.analysis .comparison-table th:first-child,
+.analysis .comparison-table tbody th[scope="row"] {
+  min-width: 96px;
+}
+
+.hero-verdict {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+}
+
+.hero-verdict.good {
+  color: var(--good);
+  background: color-mix(in oklab, var(--good) 13%, transparent);
+}
+
+.hero-verdict.bad {
+  color: var(--critical);
+  background: color-mix(in oklab, var(--critical) 13%, transparent);
+}
+
+/* ---------- breakdown ---------- */
+
+.breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.breakdown-col {
+  --accent: var(--clt);
+}
+
+.breakdown-col.pj {
+  --accent: var(--pj);
+}
+
+.breakdown-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.breakdown-row dt {
+  color: var(--ink-2);
+}
+
+.breakdown-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.breakdown-row dd.negative {
+  color: var(--ink-muted);
+}
+
+.breakdown-row.total {
+  border-bottom: none;
+  border-top: 2px solid var(--border-strong);
+  margin-top: 4px;
+  padding-top: 14px;
+  font-weight: 600;
+}
+
+.breakdown-row.total dt {
+  color: var(--ink);
+}
+
+.breakdown-row.total dd {
+  font-size: 16px;
+}
+
+/* ---------- sticky mobile summary ---------- */
+
+.sticky-bar {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in oklab, var(--surface) 95%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  text-align: left;
+}
+
+.sticky-bar .label {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.3;
+}
+
+.sticky-bar .value {
+  font-size: 19px;
+  font-weight: 650;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.sticky-bar button {
+  flex: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--pj);
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: transform 0.18s var(--ease), filter 0.18s var(--ease);
+}
+
+.sticky-bar button:active {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 860px) {
+  .app-shell {
+    padding: 22px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+    gap: 22px;
+  }
+
+  .input-grid,
+  .tiles,
+  .breakdown,
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
+
+  .comparison-table {
+    font-size: 12.5px;
+  }
+
+  .comparison-table th:first-child,
+  .comparison-table tbody th[scope="row"],
+  .comparison-table tfoot th[scope="row"] {
+    min-width: 132px;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 8px 7px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .card:hover,
+  .tile:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .hero {
+    padding: 26px 18px;
+  }
+
+  .sticky-bar {
+    display: flex;
+  }
+}
+
+@media (max-width: 420px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .breakdown-row {
+    font-size: 13px;
+  }
+
+  .sticky-bar .value {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
