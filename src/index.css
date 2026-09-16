@@ -165,6 +165,18 @@ code {
   border-top: 1px solid var(--border);
 }
 
+.build-stamp {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.build-stamp .sep {
+  margin: 0 8px;
+  opacity: 0.6;
+}
+
 /* ---------- cards ---------- */
 
 .card {

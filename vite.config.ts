@@ -6,4 +6,8 @@ import { defineConfig } from 'vite'
 export default defineConfig(({ command }) => ({
   plugins: [react()],
   base: command === 'build' ? '/calculadora-clt-pj/' : '/',
+  // Carimbado no momento do build — no deploy, é a hora em que o site foi publicado.
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
 }))
