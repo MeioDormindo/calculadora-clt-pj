@@ -15,6 +15,7 @@ export const sheetClt: CltInput = {
   healthPlan: 2800,
   otherBenefits: 0,
   maternityAid: 500,
+  externalIncome: 0,
   employerInss: null,
   rat: null,
   sistemaS: null,

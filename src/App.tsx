@@ -9,6 +9,7 @@ import { ComparisonSummary } from "./components/Results/ComparisonSummary";
 import { BreakevenCallout } from "./components/Results/BreakevenCallout";
 import { ComparisonTable } from "./components/Results/ComparisonTable";
 import { CostAnalysisPanel } from "./components/Results/CostAnalysisPanel";
+import { PjDrivers } from "./components/Results/PjDrivers";
 import { Header } from "./components/Layout/Header";
 import { Footer } from "./components/Layout/Footer";
 
@@ -32,6 +33,7 @@ const defaultState: AppState = {
     healthPlan: 2800,
     otherBenefits: 0,
     maternityAid: 500,
+    externalIncome: 0,
     employerInss: null,
     rat: null,
     sistemaS: null,
@@ -70,6 +72,7 @@ function App() {
       <div ref={resultsRef} className="app-shell-results">
         <BreakevenCallout result={result} />
         <ComparisonSummary result={result} />
+        <PjDrivers result={result} />
         <CostAnalysisPanel result={result} />
         <ComparisonTable result={result} />
       </div>

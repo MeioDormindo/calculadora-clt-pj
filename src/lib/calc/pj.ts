@@ -41,9 +41,17 @@ export function calculateLostDaysCost(
   vacationDaysPerYear: number,
 ): LostDaysCost {
   const dailyRate = workingDaysPerMonth > 0 ? grossInvoice / workingDaysPerMonth : 0;
+
+  const breakdown = [
+    { key: "lostHolidays", label: "Feriados", days: holidaysPerYear },
+    { key: "lostSick", label: "Médico / doença", days: sickDaysPerYear },
+    { key: "lostVacation", label: "Férias", days: vacationDaysPerYear },
+  ].map((item) => ({ ...item, monthlyCost: (dailyRate * item.days) / 12 }));
+
   const totalLostDays = holidaysPerYear + sickDaysPerYear + vacationDaysPerYear;
   const annualCost = dailyRate * totalLostDays;
-  return { dailyRate, totalLostDays, annualCost, monthlyEquivalent: annualCost / 12 };
+
+  return { dailyRate, breakdown, totalLostDays, annualCost, monthlyEquivalent: annualCost / 12 };
 }
 
 /**
@@ -79,11 +87,11 @@ export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult
       label: "Simples Nacional ou MEI",
       value: calculatePjTax(grossInvoice, input.taxRegime, input.manualTaxRatePct),
     },
-    {
-      key: "lostDays",
-      label: `Dias sem faturamento (${lostDays.totalLostDays}/ano)`,
-      value: lostDays.monthlyEquivalent,
-    },
+    ...lostDays.breakdown.map((item) => ({
+      key: item.key,
+      label: `${item.label} sem faturar (${item.days} dias/ano)`,
+      value: item.monthlyCost,
+    })),
   ];
 
   const totalCosts = costs.reduce((sum, line) => sum + line.value, 0);

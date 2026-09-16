@@ -35,6 +35,9 @@ export interface CltInput {
   otherBenefits: number;
   maternityAid: number;
 
+  /** Valor líquido recebido por fora da folha. Entra inteiro, sem impostos. */
+  externalIncome: number;
+
   // Encargos pagos pela empresa (null = automático).
   employerInss: Auto;
   rat: Auto;
@@ -66,6 +69,7 @@ export interface CltResult {
   grossSalary: number;
   vacationBonus: number;
   thirteenth: number;
+  externalIncome: number;
   directPay: number;
   inss: number;
   irrf: number;
@@ -78,8 +82,16 @@ export interface CltResult {
   employerCost: number;
 }
 
+export interface LostDaysBreakdown {
+  key: string;
+  label: string;
+  days: number;
+  monthlyCost: number;
+}
+
 export interface LostDaysCost {
   dailyRate: number;
+  breakdown: LostDaysBreakdown[];
   totalLostDays: number;
   annualCost: number;
   monthlyEquivalent: number;

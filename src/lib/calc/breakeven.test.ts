@@ -22,6 +22,12 @@ describe("ponto de equilíbrio", () => {
     expect(high!).toBeGreaterThan(low!);
   });
 
+  it("sobe quando há valor recebido por fora no CLT", () => {
+    const semFora = findMinimumPjGross(clt, sheetPj);
+    const comFora = findMinimumPjGross(calculateClt({ ...sheetClt, externalIncome: 1500 }), sheetPj);
+    expect(comFora!).toBeGreaterThan(semFora!);
+  });
+
   it("sobe quando há mais dias sem faturamento", () => {
     const without = findMinimumPjGross(clt, sheetPj);
     const withDays = findMinimumPjGross(clt, {

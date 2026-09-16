@@ -820,6 +820,63 @@ code {
   background: color-mix(in oklab, var(--critical) 13%, transparent);
 }
 
+/* ---------- drivers do PJ ---------- */
+
+.drivers {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.driver-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+}
+
+.driver-label {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.driver-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.driver-share {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  min-width: 30px;
+  text-align: right;
+}
+
+.driver-track {
+  height: 7px;
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in oklab, var(--pj) 14%, transparent);
+  overflow: hidden;
+}
+
+.driver-fill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--pj);
+  transition: width 0.45s var(--ease);
+}
+
 /* ---------- breakdown ---------- */
 
 .breakdown {

@@ -114,10 +114,15 @@ export function calculateClt(input: CltInput): CltResult {
   ];
   const totalEmployerCharges = employerCharges.reduce((sum, line) => sum + line.value, 0);
 
+  // Valor pago por fora da folha: chega líquido, sem INSS nem IRRF, mas a
+  // empresa desembolsa do mesmo jeito — entra nos dois lados da conta.
+  const externalIncome = input.externalIncome;
+
   return {
     grossSalary: input.grossSalary,
     vacationBonus,
     thirteenth,
+    externalIncome,
     directPay,
     inss,
     irrf,
@@ -126,7 +131,7 @@ export function calculateClt(input: CltInput): CltResult {
     totalBenefits,
     employerCharges,
     totalEmployerCharges,
-    netEffective: directPay - totalCosts,
-    employerCost: directPay + totalBenefits + totalEmployerCharges,
+    netEffective: directPay - totalCosts + externalIncome,
+    employerCost: directPay + externalIncome + totalBenefits + totalEmployerCharges,
   };
 }

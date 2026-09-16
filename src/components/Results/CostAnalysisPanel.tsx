@@ -33,20 +33,18 @@ function AnalysisBlock({ title, subtitle, data }: { title: string; subtitle: str
               <td>{formatCurrency(data.employerPj)}</td>
               <td>{formatCurrency(data.workerPj)}</td>
             </tr>
+            {/* A coluna da empresa fica neutra de propósito: economia para ela
+                não é ganho para quem lê. Só o impacto em você recebe cor. */}
             <tr>
               <th scope="row">Variação</th>
-              <td className={data.employerDelta <= 0 ? "good" : "bad"}>
-                {formatDelta(data.employerDelta)}
-              </td>
+              <td>{formatDelta(data.employerDelta)}</td>
               <td className={data.workerDelta <= 0 ? "good" : "bad"}>
                 {formatDelta(data.workerDelta)}
               </td>
             </tr>
             <tr>
               <th scope="row">Variação %</th>
-              <td className={data.employerDelta <= 0 ? "good" : "bad"}>
-                {formatPct(data.employerDeltaPct)}
-              </td>
+              <td>{formatPct(data.employerDeltaPct)}</td>
               <td className={data.workerDelta <= 0 ? "good" : "bad"}>
                 {formatPct(data.workerDeltaPct)}
               </td>

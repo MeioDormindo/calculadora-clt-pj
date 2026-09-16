@@ -38,6 +38,14 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
         hint="Cada dependente reduz R$ 189,59 da base do imposto."
       />
 
+      <Field
+        label="Recebido por fora (líquido)"
+        prefix="R$"
+        value={value.externalIncome}
+        onChange={(v) => setField("externalIncome", v)}
+        hint="Valor pago fora da folha. Entra inteiro no seu líquido, sem INSS nem IRRF, e sobe o mínimo que o PJ precisa faturar."
+      />
+
       <details className="group" open>
         <summary>Benefícios pagos pela empresa</summary>
         <div className="group-body">

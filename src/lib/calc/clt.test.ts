@@ -73,6 +73,18 @@ describe("agregados do CLT contra a planilha de referência", () => {
     expect(clt.netEffective).toBeCloseTo(clt.directPay - clt.inss - clt.irrf, 6);
   });
 
+  it("soma o valor recebido por fora sem cobrar imposto sobre ele", () => {
+    const comFora = calculateClt({ ...sheetClt, externalIncome: 1500 });
+    expect(comFora.inss).toBeCloseTo(clt.inss, 6);
+    expect(comFora.irrf).toBeCloseTo(clt.irrf, 6);
+    expect(comFora.netEffective).toBeCloseTo(clt.netEffective + 1500, 6);
+  });
+
+  it("conta o valor por fora também como desembolso da empresa", () => {
+    const comFora = calculateClt({ ...sheetClt, externalIncome: 1500 });
+    expect(comFora.employerCost).toBeCloseTo(clt.employerCost + 1500, 6);
+  });
+
   it("respeita valores sobrescritos pelo usuário", () => {
     const overridden = calculateClt({ ...sheetClt, rat: 100, profitSharing: 0 });
     expect(overridden.totalEmployerCharges).toBeCloseTo(2000 + 100 + 580, 2);

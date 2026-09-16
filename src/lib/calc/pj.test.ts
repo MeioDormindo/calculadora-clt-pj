@@ -31,6 +31,15 @@ describe("impostos e contribuições do PJ", () => {
     expect(result.totalLostDays).toBe(37);
     expect(result.annualCost).toBeCloseTo(18500, 2);
   });
+
+  it("separa feriados, doença e férias em linhas próprias", () => {
+    const { breakdown } = calculateLostDaysCost(11000, 22, 12, 5, 20);
+    expect(breakdown.map((b) => b.key)).toEqual(["lostHolidays", "lostSick", "lostVacation"]);
+    // Taxa diária de R$ 500: 12 feriados = 6.000/ano = 500/mês.
+    expect(breakdown[0].monthlyCost).toBeCloseTo(500, 2);
+    expect(breakdown[1].monthlyCost).toBeCloseTo(208.33, 2);
+    expect(breakdown[2].monthlyCost).toBeCloseTo(833.33, 2);
+  });
 });
 
 describe("lado PJ", () => {
@@ -51,6 +60,15 @@ describe("lado PJ", () => {
 
   it("para a empresa, o custo do PJ é apenas o valor da nota", () => {
     expect(calculatePj(15000, sheetPj, clt).employerCost).toBeCloseTo(15000, 2);
+  });
+
+  it("expõe cada tipo de dia parado como custo separado", () => {
+    const pj = calculatePj(11000, { ...sheetPj, holidaysPerYear: 12, sickDaysPerYear: 5, vacationDaysPerYear: 20 }, clt);
+    const keys = pj.costs.map((c) => c.key);
+    expect(keys).toContain("lostHolidays");
+    expect(keys).toContain("lostSick");
+    expect(keys).toContain("lostVacation");
+    expect(keys).not.toContain("lostDays");
   });
 
   it("avisa quando o faturamento estoura o teto do MEI", () => {

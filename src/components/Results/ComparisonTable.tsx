@@ -35,6 +35,9 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
     },
     { label: "Adicional de férias", clt: clt.vacationBonus, min: null, prop: null },
     { label: "Décimo terceiro salário", clt: clt.thirteenth, min: null, prop: null },
+    ...(clt.externalIncome > 0
+      ? [{ label: "Recebido por fora (líquido)", clt: clt.externalIncome, min: null, prop: null }]
+      : []),
     ...clt.benefits.map((benefit) => ({
       label: benefit.label,
       clt: benefit.value,
@@ -61,12 +64,12 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       min: cost(minimum, "tax"),
       prop: cost(proposed, "tax"),
     },
-    {
-      label: `Dias sem faturamento (${proposed.lostDays.totalLostDays}/ano)`,
+    ...proposed.lostDays.breakdown.map((item) => ({
+      label: `${item.label} sem faturar (${item.days} dias/ano)`,
       clt: null,
-      min: cost(minimum, "lostDays"),
-      prop: cost(proposed, "lostDays"),
-    },
+      min: cost(minimum, item.key),
+      prop: cost(proposed, item.key),
+    })),
   ];
 
   return (
