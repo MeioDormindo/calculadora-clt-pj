@@ -8,7 +8,7 @@ interface CltInputsProps {
 }
 
 export function CltInputs({ value, onChange }: CltInputsProps) {
-  const auto = deriveCltDefaults(value.grossSalary);
+  const auto = deriveCltDefaults(value);
 
   function setField<K extends keyof CltInput>(key: K, fieldValue: CltInput[K]) {
     onChange({ ...value, [key]: fieldValue });
@@ -55,12 +55,14 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
               prefix="R$"
               value={value.transportVoucher}
               onChange={(v) => setField("transportVoucher", v)}
+              hint="Valor total. Por lei você banca até 6% do salário; só o que passa disso é benefício."
             />
             <Field
               label="Vale-refeição"
               prefix="R$"
               value={value.mealVoucher}
               onChange={(v) => setField("mealVoucher", v)}
+              hint="Já sem a parte descontada de você, se houver."
             />
           </div>
           <Field
@@ -116,7 +118,7 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
               value={value.fgts}
               auto={auto.fgts}
               onChange={setAuto("fgts")}
-              hint="8% do bruto."
+              hint="8% do salário, 13º e férias + 1/3."
             />
             <AutoField
               label="Multa do FGTS"
@@ -144,7 +146,7 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
             value={value.employerInss}
             auto={auto.employerInss}
             onChange={setAuto("employerInss")}
-            hint="20% da folha. Empresas no Simples Nacional não pagam — zere o campo."
+            hint="20% da folha (salário, 13º e férias). Empresa no Simples Nacional não paga — zere o campo."
           />
           <div className="field-row">
             <AutoField

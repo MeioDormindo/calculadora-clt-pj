@@ -11,6 +11,9 @@ import {
   IRRF_BRACKETS,
   IRRF_DEPENDENT_DEDUCTION,
   IRRF_ISENCAO_GROSS_LIMIT,
+  IRRF_REDUCAO_MAXIMA,
+  IRRF_DESCONTO_SIMPLIFICADO,
+  TRANSPORT_VOUCHER_EMPLOYEE_SHARE,
   IRRF_REDUTOR_GROSS_LIMIT,
   IRRF_REDUTOR_BASE,
   IRRF_REDUTOR_FACTOR,
@@ -37,28 +40,36 @@ export function calculateInss(grossSalary: number, brackets: InssBracket[] = INS
   return total;
 }
 
-// Redutor da Lei 15.270/2025: reduz progressivamente o IRRF calculado para
-// quem tem rendimento bruto entre IRRF_ISENCAO_GROSS_LIMIT e
-// IRRF_REDUTOR_GROSS_LIMIT. A fórmula usa o rendimento BRUTO, não a base
-// após INSS/dependentes.
-export function calculateIrrfRedutor(grossSalary: number): number {
-  if (grossSalary > IRRF_REDUTOR_GROSS_LIMIT) return 0;
-  return Math.max(0, IRRF_REDUTOR_BASE - IRRF_REDUTOR_FACTOR * grossSalary);
+/** Redução mensal do IR da Lei 15.270/2025 (art. 3º-A da Lei 9.250). */
+export function calculateIrrfReduction(taxableIncome: number, tax: number): number {
+  if (taxableIncome <= IRRF_ISENCAO_GROSS_LIMIT) return Math.min(tax, IRRF_REDUCAO_MAXIMA);
+  if (taxableIncome > IRRF_REDUTOR_GROSS_LIMIT) return 0;
+  return Math.max(0, IRRF_REDUTOR_BASE - IRRF_REDUTOR_FACTOR * taxableIncome);
 }
 
+/**
+ * IRRF sobre um rendimento. A base desconta as deduções legais (INSS +
+ * dependentes) ou o desconto simplificado, o que for mais vantajoso — exceto
+ * no 13º, que tem tributação exclusiva e não admite o simplificado. A
+ * redução da lei é calculada sobre o rendimento bruto, não sobre a base.
+ */
 export function calculateIrrf(
-  grossSalary: number,
-  baseAfterInss: number,
+  taxableIncome: number,
+  inssPaid: number,
   dependents: number,
+  { allowSimplifiedDeduction = true }: { allowSimplifiedDeduction?: boolean } = {},
   brackets: IrrfBracket[] = IRRF_BRACKETS,
 ): number {
-  if (grossSalary <= IRRF_ISENCAO_GROSS_LIMIT) return 0;
+  const legalDeductions = inssPaid + dependents * IRRF_DEPENDENT_DEDUCTION;
+  const deduction = allowSimplifiedDeduction
+    ? Math.max(legalDeductions, IRRF_DESCONTO_SIMPLIFICADO)
+    : legalDeductions;
 
-  const base = Math.max(0, baseAfterInss - dependents * IRRF_DEPENDENT_DEDUCTION);
+  const base = Math.max(0, taxableIncome - deduction);
   const bracket = brackets.find((b) => base <= b.upTo) ?? brackets[brackets.length - 1];
-  const normalIrrf = Math.max(0, base * bracket.rate - bracket.deduction);
+  const tax = Math.max(0, base * bracket.rate - bracket.deduction);
 
-  return Math.max(0, normalIrrf - calculateIrrfRedutor(grossSalary));
+  return Math.max(0, tax - calculateIrrfReduction(taxableIncome, tax));
 }
 
 /** Usa o valor informado pelo usuário, ou a fórmula automática quando `null`. */
@@ -66,9 +77,18 @@ function resolve(override: Auto, automatic: number): number {
   return override ?? automatic;
 }
 
-/** Valores que o site preenche sozinho a partir do salário bruto. */
-export function deriveCltDefaults(grossSalary: number) {
-  const fgts = grossSalary * FGTS_RATE;
+/**
+ * Valores que o site preenche sozinho. FGTS e encargos patronais incidem sobre
+ * a folha do ano inteira — salário, 13º e férias + 1/3 —, e não só sobre o
+ * salário do mês.
+ */
+export function deriveCltDefaults(input: Pick<CltInput, "grossSalary" | "vacationBonus" | "thirteenth">) {
+  const { grossSalary } = input;
+  const vacationBonus = resolve(input.vacationBonus, grossSalary / VACATION_BONUS_DIVISOR);
+  const thirteenth = resolve(input.thirteenth, grossSalary / THIRTEENTH_DIVISOR);
+  const payroll = grossSalary + vacationBonus + thirteenth;
+  const fgts = payroll * FGTS_RATE;
+
   return {
     vacationBonus: grossSalary / VACATION_BONUS_DIVISOR,
     thirteenth: grossSalary / THIRTEENTH_DIVISOR,
@@ -76,21 +96,42 @@ export function deriveCltDefaults(grossSalary: number) {
     fgtsFine: fgts * FGTS_TERMINATION_FINE_RATE,
     priorNotice: grossSalary / PRIOR_NOTICE_DIVISOR,
     profitSharing: grossSalary / PROFIT_SHARING_DIVISOR,
-    employerInss: grossSalary * EMPLOYER_INSS_RATE,
-    rat: grossSalary * RAT_RATE,
-    sistemaS: grossSalary * SISTEMA_S_RATE,
+    employerInss: payroll * EMPLOYER_INSS_RATE,
+    rat: payroll * RAT_RATE,
+    sistemaS: payroll * SISTEMA_S_RATE,
   };
 }
 
+/** Parte do vale-transporte que a empresa de fato paga. */
+export function companyTransportVoucher(voucher: number, grossSalary: number): number {
+  return Math.max(0, voucher - grossSalary * TRANSPORT_VOUCHER_EMPLOYEE_SHARE);
+}
+
 export function calculateClt(input: CltInput): CltResult {
-  const auto = deriveCltDefaults(input.grossSalary);
+  const auto = deriveCltDefaults(input);
+  const { grossSalary, dependents } = input;
 
   const vacationBonus = resolve(input.vacationBonus, auto.vacationBonus);
   const thirteenth = resolve(input.thirteenth, auto.thirteenth);
-  const directPay = input.grossSalary + vacationBonus + thirteenth;
+  const directPay = grossSalary + vacationBonus + thirteenth;
 
-  const inss = calculateInss(input.grossSalary);
-  const irrf = calculateIrrf(input.grossSalary, input.grossSalary - inss, input.dependents);
+  // Os impostos são a média mensal do ano: 11 meses de salário, 1 mês de
+  // férias (salário + 1/3, tributados juntos) e o 13º, com tributação própria.
+  const vacationMonth = grossSalary + vacationBonus * 12;
+  const thirteenthPayment = thirteenth * 12;
+
+  const inssRegular = calculateInss(grossSalary);
+  const inssVacation = calculateInss(vacationMonth);
+  const inssThirteenth = calculateInss(thirteenthPayment);
+
+  const irrfRegular = calculateIrrf(grossSalary, inssRegular, dependents);
+  const irrfVacation = calculateIrrf(vacationMonth, inssVacation, dependents);
+  const irrfThirteenth = calculateIrrf(thirteenthPayment, inssThirteenth, dependents, {
+    allowSimplifiedDeduction: false,
+  });
+
+  const inss = (11 * inssRegular + inssVacation + inssThirteenth) / 12;
+  const irrf = (11 * irrfRegular + irrfVacation + irrfThirteenth) / 12;
   const totalCosts = inss + irrf;
 
   // Tudo o que a empresa banca hoje e o PJ teria que custear do próprio bolso.
@@ -98,7 +139,11 @@ export function calculateClt(input: CltInput): CltResult {
     { key: "fgts", label: "FGTS", value: resolve(input.fgts, auto.fgts) },
     { key: "fgtsFine", label: "Multa do FGTS (provisão)", value: resolve(input.fgtsFine, auto.fgtsFine) },
     { key: "priorNotice", label: "Aviso prévio (provisão)", value: resolve(input.priorNotice, auto.priorNotice) },
-    { key: "transportVoucher", label: "Vale-transporte", value: input.transportVoucher },
+    {
+      key: "transportVoucher",
+      label: "Vale-transporte (parte da empresa)",
+      value: companyTransportVoucher(input.transportVoucher, grossSalary),
+    },
     { key: "mealVoucher", label: "Vale-refeição", value: input.mealVoucher },
     { key: "healthPlan", label: "Plano de saúde", value: input.healthPlan },
     { key: "profitSharing", label: "Participação nos lucros", value: resolve(input.profitSharing, auto.profitSharing) },
@@ -119,7 +164,8 @@ export function calculateClt(input: CltInput): CltResult {
   const externalIncome = input.externalIncome;
 
   return {
-    grossSalary: input.grossSalary,
+    grossSalary,
+    dependents,
     vacationBonus,
     thirteenth,
     externalIncome,

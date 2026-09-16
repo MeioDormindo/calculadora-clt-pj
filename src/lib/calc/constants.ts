@@ -1,4 +1,4 @@
-import type { InssBracket, IrrfBracket, PjTaxRegimeId, PjInssModeId } from "./types";
+import type { InssBracket, IrrfBracket, PjTaxRegimeId, PjInssModeId, SimplesBracket } from "./types";
 
 // Tabelas de referência: ano-base 2026. INSS, IRRF, salário mínimo e limites de
 // MEI/Simples Nacional mudam todo ano (geralmente em janeiro) — revisar estes
@@ -28,18 +28,28 @@ export const IRRF_BRACKETS: IrrfBracket[] = [
 
 export const IRRF_DEPENDENT_DEDUCTION = 189.59;
 
+// Alternativa às deduções legais (INSS + dependentes) na retenção mensal: vale
+// o que for mais vantajoso. Não existe no 13º, que tem tributação exclusiva.
+export const IRRF_DESCONTO_SIMPLIFICADO = 607.2;
+
 // Lei 15.270/2025: isenção efetiva de IRRF para quem tem rendimento bruto
 // mensal até este valor, e redução progressiva ("redutor") do imposto
 // calculado normalmente para quem recebe entre este valor e
 // IRRF_REDUTOR_GROSS_LIMIT. O redutor usa o rendimento BRUTO (não a base já
 // descontada de INSS/dependentes) e nunca deixa o imposto negativo.
 export const IRRF_ISENCAO_GROSS_LIMIT = 5000.0;
+// Redução máxima até R$ 5.000 — com o desconto simplificado, zera o imposto.
+export const IRRF_REDUCAO_MAXIMA = 312.89;
 export const IRRF_REDUTOR_GROSS_LIMIT = 7350.0;
 export const IRRF_REDUTOR_BASE = 978.62;
 export const IRRF_REDUTOR_FACTOR = 0.133145;
 
 export const FGTS_RATE = 0.08;
 export const FGTS_TERMINATION_FINE_RATE = 0.4;
+
+// Lei 7.418/85: o empregado banca o vale-transporte até 6% do salário básico;
+// a empresa só paga o que passar disso.
+export const TRANSPORT_VOUCHER_EMPLOYEE_SHARE = 0.06;
 
 export const MINIMUM_WAGE = 1621.0;
 
@@ -50,7 +60,8 @@ export const THIRTEENTH_DIVISOR = 12; // um salário por ano
 export const PRIOR_NOTICE_DIVISOR = 24; // meio salário por ano de provisão
 export const PROFIT_SHARING_DIVISOR = 12; // uma PLR de um salário por ano
 
-// Encargos patronais sobre a folha (empresa fora do Simples Nacional).
+// Encargos patronais sobre a folha (empresa fora do Simples Nacional). A folha
+// inclui 13º e férias + 1/3, não só o salário do mês — o mesmo vale para o FGTS.
 export const EMPLOYER_INSS_RATE = 0.2;
 export const RAT_RATE = 0.03; // 1% a 3% conforme o grau de risco do CNAE
 export const SISTEMA_S_RATE = 0.058; // salário-educação, SEBRAE, SESI/SENAI etc.
@@ -59,19 +70,49 @@ export const SISTEMA_S_RATE = 0.058; // salário-educação, SEBRAE, SESI/SENAI 
 export const MEI_ANNUAL_LIMIT = 81000;
 export const MEI_MONTHLY_LIMIT = MEI_ANNUAL_LIMIT / 12;
 
+// Simples Nacional 2026 (LC 123/2006). Alíquota efetiva =
+// (RBT12 x nominal - parcela a deduzir) / RBT12, com RBT12 = receita de 12 meses.
+export const SIMPLES_ANEXO_I: SimplesBracket[] = [
+  { upTo: 180000, rate: 0.04, deduction: 0 },
+  { upTo: 360000, rate: 0.073, deduction: 5940 },
+  { upTo: 720000, rate: 0.095, deduction: 13860 },
+  { upTo: 1800000, rate: 0.107, deduction: 22500 },
+  { upTo: 3600000, rate: 0.143, deduction: 87300 },
+  { upTo: 4800000, rate: 0.19, deduction: 378000 },
+];
+
+export const SIMPLES_ANEXO_III: SimplesBracket[] = [
+  { upTo: 180000, rate: 0.06, deduction: 0 },
+  { upTo: 360000, rate: 0.112, deduction: 9360 },
+  { upTo: 720000, rate: 0.135, deduction: 17640 },
+  { upTo: 1800000, rate: 0.16, deduction: 35640 },
+  { upTo: 3600000, rate: 0.21, deduction: 125640 },
+  { upTo: 4800000, rate: 0.33, deduction: 648000 },
+];
+
+export const SIMPLES_ANEXO_V: SimplesBracket[] = [
+  { upTo: 180000, rate: 0.155, deduction: 0 },
+  { upTo: 360000, rate: 0.18, deduction: 4500 },
+  { upTo: 720000, rate: 0.195, deduction: 9900 },
+  { upTo: 1800000, rate: 0.205, deduction: 17100 },
+  { upTo: 3600000, rate: 0.23, deduction: 62100 },
+  { upTo: 4800000, rate: 0.305, deduction: 540000 },
+];
+
 export interface PjTaxPreset {
   id: PjTaxRegimeId;
   label: string;
-  rate: number | null;
+  brackets?: SimplesBracket[];
   fixedMonthly?: number;
 }
 
 export const PJ_TAX_PRESETS: PjTaxPreset[] = [
-  { id: "MEI", label: "MEI (DAS fixo — serviços)", rate: null, fixedMonthly: 86.05 },
-  { id: "SIMPLES_I", label: "Simples Nacional — Anexo I (~4%)", rate: 0.04 },
-  { id: "SIMPLES_III", label: "Simples Nacional — Anexo III (~6%)", rate: 0.06 },
-  { id: "SIMPLES_V", label: "Simples Nacional — Anexo V (~15,5%)", rate: 0.155 },
-  { id: "MANUAL", label: "Taxa manual", rate: null },
+  { id: "MEI", label: "MEI (DAS fixo — serviços)", fixedMonthly: 86.05 },
+  { id: "SIMPLES_I", label: "Simples Nacional — Anexo I (a partir de 4%)", brackets: SIMPLES_ANEXO_I },
+  { id: "SIMPLES_III", label: "Simples Nacional — Anexo III (a partir de 6%)", brackets: SIMPLES_ANEXO_III },
+  { id: "SIMPLES_V", label: "Simples Nacional — Anexo V (a partir de 15,5%)", brackets: SIMPLES_ANEXO_V },
+  { id: "CARNE_LEAO", label: "Autônomo sem CNPJ — carnê-leão (tabela do IR)" },
+  { id: "MANUAL", label: "Taxa manual" },
 ];
 
 export interface PjInssPreset {
@@ -98,8 +139,8 @@ export const PJ_INSS_PRESETS: PjInssPreset[] = [
   },
   {
     id: "AUTONOMO",
-    label: "Autônomo / carnê-leão",
-    description: "20% sobre o valor recebido, limitado ao teto do INSS (sem CNPJ)",
+    label: "Autônomo sem CNPJ",
+    description: "20% sobre o valor recebido, limitado ao teto do INSS. Combine com o regime carnê-leão",
   },
   {
     id: "CUSTOM",
@@ -115,7 +156,7 @@ export const DEFAULT_SICK_DAYS_PER_YEAR = 5;
 export const DEFAULT_VACATION_DAYS_PER_YEAR = 20;
 
 // Fração mínima de pró-labore sobre o faturamento para serviços sujeitos ao
-// Fator R saírem do Anexo V (15,5%) e ficarem no Anexo III (6%).
+// Fator R saírem do Anexo V e ficarem no Anexo III.
 export const FATOR_R_MIN = 0.28;
 
 export interface PjActivity {
@@ -126,64 +167,64 @@ export interface PjActivity {
   description: string;
 }
 
-// Alíquotas nominais da 1ª faixa do Simples (receita até R$ 180 mil/ano, ou
-// R$ 15 mil/mês). Acima disso a alíquota efetiva sobe aos poucos.
+// As descrições citam a alíquota da 1ª faixa; o cálculo usa a tabela inteira,
+// então acima de R$ 15 mil/mês a alíquota efetiva sobe sozinha.
 export const PJ_ACTIVITIES: PjActivity[] = [
   {
     id: "TI",
     label: "Serviços de TI",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele.",
+    description: "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele.",
   },
   {
     id: "PJ_EMPRESA",
     label: "PJ em uma empresa (consultoria)",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Consultoria e serviço intelectual: Anexo III (6%) via Fator R.",
+    description: "Consultoria e serviço intelectual: Anexo III (a partir de 6%) via Fator R.",
   },
   {
     id: "ADMIN",
     label: "Serviços administrativos",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
   },
   {
     id: "MEDICINA",
     label: "Medicina",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (6%) via Fator R. Sem pró-labore de 28%, cairia no Anexo V (15,5%).",
+    description: "Anexo III (a partir de 6%) via Fator R. Sem pró-labore de 28%, cairia no Anexo V (a partir de 15,5%).",
   },
   {
     id: "SAUDE",
     label: "Psicologia e outros da saúde",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
   },
   {
     id: "ENGENHARIA",
     label: "Engenharia e arquitetura",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
   },
   {
     id: "MARKETING",
     label: "Marketing e publicidade",
     taxRegime: "SIMPLES_III",
     inssMode: "SIMPLES_PROLABORE",
-    description: "Anexo III (6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
+    description: "Anexo III (a partir de 6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
   },
   {
     id: "COMERCIO",
     label: "Comércio",
     taxRegime: "SIMPLES_I",
     inssMode: "SIMPLES_PROLABORE",
-    description: "Anexo I (4%). Pró-labore de 1 salário mínimo.",
+    description: "Anexo I (a partir de 4%). Pró-labore de 1 salário mínimo.",
   },
   {
     id: "MEI",

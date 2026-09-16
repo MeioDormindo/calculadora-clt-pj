@@ -12,7 +12,19 @@ export interface IrrfBracket {
   deduction: number;
 }
 
-export type PjTaxRegimeId = "MEI" | "SIMPLES_I" | "SIMPLES_III" | "SIMPLES_V" | "MANUAL";
+export type PjTaxRegimeId =
+  | "MEI"
+  | "SIMPLES_I"
+  | "SIMPLES_III"
+  | "SIMPLES_V"
+  | "CARNE_LEAO"
+  | "MANUAL";
+
+export interface SimplesBracket {
+  upTo: number;
+  rate: number;
+  deduction: number;
+}
 
 export type PjInssModeId = "MEI" | "SIMPLES_PROLABORE" | "FATOR_R" | "AUTONOMO" | "CUSTOM";
 
@@ -75,6 +87,7 @@ export interface Line {
 
 export interface CltResult {
   grossSalary: number;
+  dependents: number;
   vacationBonus: number;
   thirteenth: number;
   externalIncome: number;

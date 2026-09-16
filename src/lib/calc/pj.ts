@@ -1,4 +1,5 @@
-import type { PjInput, PjResult, CltResult, Line, LostDaysCost } from "./types";
+import type { PjInput, PjResult, CltResult, Line, LostDaysCost, SimplesBracket } from "./types";
+import { calculateIrrf } from "./clt";
 import {
   PJ_TAX_PRESETS,
   MINIMUM_WAGE,
@@ -19,16 +20,39 @@ export function applyActivity(input: PjInput): PjInput {
   return { ...input, taxRegime: activity.taxRegime, inssMode: activity.inssMode };
 }
 
+/**
+ * DAS do Simples Nacional no mês. A alíquota efetiva depende da receita dos
+ * últimos 12 meses (RBT12): (RBT12 x nominal - parcela a deduzir) / RBT12.
+ * Aqui o RBT12 é o faturamento mensal x 12, supondo renda estável.
+ */
+export function calculateSimplesTax(grossInvoice: number, brackets: SimplesBracket[]): number {
+  const rbt12 = grossInvoice * 12;
+  if (rbt12 <= 0) return 0;
+  const bracket = brackets.find((b) => rbt12 <= b.upTo) ?? brackets[brackets.length - 1];
+  return Math.max(0, (rbt12 * bracket.rate - bracket.deduction) / 12);
+}
+
 export function calculatePjTax(
   grossInvoice: number,
   taxRegime: PjInput["taxRegime"],
   manualTaxRatePct: number,
+  inssPaid = 0,
+  dependents = 0,
 ): number {
   const preset = PJ_TAX_PRESETS.find((p) => p.id === taxRegime);
   if (!preset) return 0;
   if (preset.fixedMonthly != null) return preset.fixedMonthly;
-  if (preset.rate != null) return grossInvoice * preset.rate;
+  if (preset.brackets) return calculateSimplesTax(grossInvoice, preset.brackets);
+  // Sem CNPJ, o rendimento vai inteiro para a tabela mensal do IR (carnê-leão).
+  if (taxRegime === "CARNE_LEAO") return calculateIrrf(grossInvoice, inssPaid, dependents);
   return grossInvoice * (manualTaxRatePct / 100);
+}
+
+/** Pró-labore que o sócio retira da empresa, quando o modo de INSS prevê um. */
+export function calculatePjProLabore(grossInvoice: number, inssMode: PjInput["inssMode"]): number {
+  if (inssMode === "FATOR_R") return Math.max(grossInvoice * FATOR_R_MIN, MINIMUM_WAGE);
+  if (inssMode === "SIMPLES_PROLABORE") return MINIMUM_WAGE;
+  return 0;
 }
 
 export function calculatePjInss(
@@ -41,10 +65,8 @@ export function calculatePjInss(
     case "MEI":
       return 0;
     case "SIMPLES_PROLABORE":
-      return MINIMUM_WAGE * 0.11;
     case "FATOR_R":
-      // Pró-labore nunca abaixo do salário mínimo nem acima do teto do INSS.
-      return Math.min(Math.max(grossInvoice * FATOR_R_MIN, MINIMUM_WAGE), INSS_CEILING) * 0.11;
+      return Math.min(calculatePjProLabore(grossInvoice, inssMode), INSS_CEILING) * 0.11;
     case "AUTONOMO":
       return Math.min(grossInvoice, INSS_CEILING) * 0.2;
     case "CUSTOM":
@@ -117,26 +139,31 @@ export function calculateLostDaysCost(grossInvoice: number, input: PjInput): Los
  */
 export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult): PjResult {
   const lostDays = calculateLostDaysCost(grossInvoice, input);
+  const inss = calculatePjInss(
+    grossInvoice,
+    input.inssMode,
+    input.customInssRatePct,
+    input.customInssBase,
+  );
+  const proLabore = calculatePjProLabore(grossInvoice, input.inssMode);
+  const proLaboreIrrf = proLabore > 0 ? calculateIrrf(proLabore, inss, clt.dependents) : 0;
+  const tax = calculatePjTax(
+    grossInvoice,
+    input.taxRegime,
+    input.manualTaxRatePct,
+    inss,
+    clt.dependents,
+  );
 
   const costs: Line[] = [
     ...clt.benefits.map((line) => ({ ...line })),
     { key: "lifeInsurance", label: "Seguro de vida", value: input.lifeInsurance },
     { key: "accountantFee", label: "Serviços de contabilidade", value: input.accountantFee },
-    {
-      key: "inss",
-      label: "INSS",
-      value: calculatePjInss(
-        grossInvoice,
-        input.inssMode,
-        input.customInssRatePct,
-        input.customInssBase,
-      ),
-    },
-    {
-      key: "tax",
-      label: "Simples Nacional ou MEI",
-      value: calculatePjTax(grossInvoice, input.taxRegime, input.manualTaxRatePct),
-    },
+    { key: "inss", label: "INSS", value: inss },
+    // O pró-labore é salário do sócio e paga IR como qualquer salário; o resto
+    // sai como lucro distribuído, que é isento.
+    { key: "proLaboreIrrf", label: "IRRF sobre o pró-labore", value: proLaboreIrrf },
+    { key: "tax", label: "Simples Nacional ou MEI", value: tax },
     ...lostDays.breakdown.map((item) => ({
       key: item.key,
       label: item.label,

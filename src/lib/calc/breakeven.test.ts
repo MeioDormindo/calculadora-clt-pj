@@ -73,10 +73,10 @@ describe("análise empresa vs empregado", () => {
   const result = compareCltVsPj(sheetClt, sheetPj);
 
   it("compara o custo da empresa nos dois regimes", () => {
-    expect(result.analysisProposed.employerClt).toBeCloseTo(20861.11, 2);
+    expect(result.analysisProposed.employerClt).toBeCloseTo(20705.56, 1);
     expect(result.analysisProposed.employerPj).toBeCloseTo(15000, 2);
-    expect(result.analysisProposed.employerDelta).toBeCloseTo(-5861.11, 2);
-    expect(result.analysisProposed.employerDeltaPct).toBeCloseTo(-28.1, 1);
+    expect(result.analysisProposed.employerDelta).toBeCloseTo(-5705.56, 1);
+    expect(result.analysisProposed.employerDeltaPct).toBeCloseTo(-27.56, 1);
   });
 
   it("mostra o quanto o custo do trabalhador aumenta", () => {

@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateSimplesTax,
   calculatePjTax,
   calculatePjInss,
   calculateLostDaysCost,
   calculatePj,
   applyActivity,
 } from "./pj";
-import { PJ_ACTIVITIES, PJ_TAX_PRESETS, PJ_INSS_PRESETS, INSS_CEILING } from "./constants";
+import {
+  PJ_ACTIVITIES,
+  PJ_TAX_PRESETS,
+  PJ_INSS_PRESETS,
+  INSS_CEILING,
+  SIMPLES_ANEXO_III,
+} from "./constants";
 import { calculateClt } from "./clt";
 import { sheetClt, sheetPj } from "./fixtures";
 
@@ -174,5 +181,46 @@ describe("atividade do PJ", () => {
   it("atividade desconhecida não quebra o cálculo", () => {
     const estranho = { ...sheetPj, activity: "NAO_EXISTE" };
     expect(applyActivity(estranho)).toEqual(estranho);
+  });
+});
+
+describe("Simples Nacional progressivo", () => {
+  it("na 1ª faixa (até R$ 15 mil/mês) usa a alíquota nominal", () => {
+    expect(calculateSimplesTax(15000, SIMPLES_ANEXO_III)).toBeCloseTo(900, 2);
+  });
+
+  it("na 2ª faixa aplica a alíquota efetiva publicada", () => {
+    // RBT12 de R$ 300 mil no Anexo III: efetiva de 8,08%.
+    expect(calculateSimplesTax(25000, SIMPLES_ANEXO_III)).toBeCloseTo(25000 * 0.0808, 0);
+  });
+
+  it("não dá salto na mudança de faixa", () => {
+    const naFronteira = calculateSimplesTax(15000, SIMPLES_ANEXO_III);
+    const logoAcima = calculateSimplesTax(15000.01, SIMPLES_ANEXO_III);
+    expect(logoAcima - naFronteira).toBeLessThan(0.01);
+  });
+});
+
+describe("IR do PJ", () => {
+  const clt = calculateClt(sheetClt);
+  const ti = { ...sheetPj, activity: "TI", inssMode: "FATOR_R" as const };
+
+  it("pró-labore até R$ 5.000 fica isento", () => {
+    // Faturamento 15.000 -> pró-labore 4.200.
+    const pj = calculatePj(15000, ti, clt);
+    expect(pj.costs.find((c) => c.key === "proLaboreIrrf")?.value).toBe(0);
+  });
+
+  it("pró-labore maior paga IR como salário", () => {
+    // Faturamento 25.000 -> pró-labore 7.000, INSS 770. Base 6.230 -> 804,52;
+    // redução 978,62 - 0,133145 x 7.000 = 46,60.
+    const pj = calculatePj(25000, ti, clt);
+    expect(pj.costs.find((c) => c.key === "proLaboreIrrf")?.value).toBeCloseTo(757.91, 1);
+  });
+
+  it("autônomo sem CNPJ paga a tabela do IR sobre tudo (carnê-leão)", () => {
+    const inss = calculatePjInss(10000, "AUTONOMO", 0, 0);
+    // 10.000 - 1.695,11 = 8.304,89 -> x 27,5% - 908,73.
+    expect(calculatePjTax(10000, "CARNE_LEAO", 0, inss, 0)).toBeCloseTo(1375.11, 1);
   });
 });

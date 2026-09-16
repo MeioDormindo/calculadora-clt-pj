@@ -56,8 +56,18 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       min: cost(minimum, "accountantFee"),
       prop: cost(proposed, "accountantFee"),
     },
-    { label: "INSS", clt: -clt.inss, min: cost(minimum, "inss"), prop: cost(proposed, "inss") },
-    { label: "IRRF", clt: -clt.irrf, min: null, prop: null },
+    {
+      label: "INSS",
+      clt: -clt.inss,
+      min: cost(minimum, "inss"),
+      prop: cost(proposed, "inss"),
+    },
+    {
+      label: "IRRF (no PJ, sobre o pró-labore)",
+      clt: -clt.irrf,
+      min: cost(minimum, "proLaboreIrrf"),
+      prop: cost(proposed, "proLaboreIrrf"),
+    },
     {
       label: "Simples Nacional ou MEI",
       clt: null,
@@ -77,7 +87,7 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       <h3 className="card-title">Comparativo mensal, linha a linha</h3>
       <p className="card-subtitle">
         Como CLT a empresa banca os benefícios; como PJ eles viram custo seu. É essa diferença que
-        o valor mínimo precisa cobrir.
+        o valor mínimo precisa cobrir. No CLT, INSS e IRRF são a média do ano, já contando 13º e férias.
       </p>
 
       <p className="scroll-hint">Deslize a tabela para o lado para ver a proposta →</p>
