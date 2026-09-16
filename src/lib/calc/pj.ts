@@ -33,25 +33,60 @@ export function calculatePjInss(
   }
 }
 
-export function calculateLostDaysCost(
-  grossInvoice: number,
-  workingDaysPerMonth: number,
-  holidaysPerYear: number,
-  sickDaysPerYear: number,
-  vacationDaysPerYear: number,
-): LostDaysCost {
-  const dailyRate = workingDaysPerMonth > 0 ? grossInvoice / workingDaysPerMonth : 0;
+function describeDays(name: string, days: number, unpaidDays: number): string {
+  if (days === 0) return `${name} (nenhum dia)`;
+  if (unpaidDays === 0) return `${name} (${days} dias/ano · pagos pela empresa)`;
+  if (unpaidDays === days) return `${name} sem faturar (${days} dias/ano)`;
+  return `${name} sem faturar (${unpaidDays} de ${days} dias/ano)`;
+}
+
+export function calculateLostDaysCost(grossInvoice: number, input: PjInput): LostDaysCost {
+  const dailyRate =
+    input.workingDaysPerMonth > 0 ? grossInvoice / input.workingDaysPerMonth : 0;
 
   const breakdown = [
-    { key: "lostHolidays", label: "Feriados", days: holidaysPerYear },
-    { key: "lostSick", label: "Médico / doença", days: sickDaysPerYear },
-    { key: "lostVacation", label: "Férias", days: vacationDaysPerYear },
-  ].map((item) => ({ ...item, monthlyCost: (dailyRate * item.days) / 12 }));
+    {
+      key: "lostHolidays",
+      name: "Feriados",
+      days: input.holidaysPerYear,
+      paidDays: input.paidHolidays ? input.holidaysPerYear : 0,
+    },
+    {
+      key: "lostSick",
+      name: "Médico / doença",
+      days: input.sickDaysPerYear,
+      paidDays: input.paidSickDays ? input.sickDaysPerYear : 0,
+    },
+    {
+      key: "lostVacation",
+      name: "Férias",
+      days: input.vacationDaysPerYear,
+      paidDays: Math.min(Math.max(0, input.paidVacationDays), input.vacationDaysPerYear),
+    },
+  ].map(({ key, name, days, paidDays }) => {
+    const unpaidDays = Math.max(0, days - paidDays);
+    return {
+      key,
+      label: describeDays(name, days, unpaidDays),
+      days,
+      paidDays,
+      unpaidDays,
+      monthlyCost: (dailyRate * unpaidDays) / 12,
+    };
+  });
 
-  const totalLostDays = holidaysPerYear + sickDaysPerYear + vacationDaysPerYear;
-  const annualCost = dailyRate * totalLostDays;
+  const totalLostDays = breakdown.reduce((sum, item) => sum + item.days, 0);
+  const totalUnpaidDays = breakdown.reduce((sum, item) => sum + item.unpaidDays, 0);
+  const annualCost = dailyRate * totalUnpaidDays;
 
-  return { dailyRate, breakdown, totalLostDays, annualCost, monthlyEquivalent: annualCost / 12 };
+  return {
+    dailyRate,
+    breakdown,
+    totalLostDays,
+    totalUnpaidDays,
+    annualCost,
+    monthlyEquivalent: annualCost / 12,
+  };
 }
 
 /**
@@ -60,13 +95,7 @@ export function calculateLostDaysCost(
  * que faz a comparação ser justa.
  */
 export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult): PjResult {
-  const lostDays = calculateLostDaysCost(
-    grossInvoice,
-    input.workingDaysPerMonth,
-    input.holidaysPerYear,
-    input.sickDaysPerYear,
-    input.vacationDaysPerYear,
-  );
+  const lostDays = calculateLostDaysCost(grossInvoice, input);
 
   const costs: Line[] = [
     ...clt.benefits.map((line) => ({ ...line })),
@@ -89,7 +118,7 @@ export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult
     },
     ...lostDays.breakdown.map((item) => ({
       key: item.key,
-      label: `${item.label} sem faturar (${item.days} dias/ano)`,
+      label: item.label,
       value: item.monthlyCost,
     })),
   ];

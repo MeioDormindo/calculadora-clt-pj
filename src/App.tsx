@@ -51,6 +51,9 @@ const defaultState: AppState = {
     holidaysPerYear: 12,
     sickDaysPerYear: 5,
     vacationDaysPerYear: 20,
+    paidHolidays: false,
+    paidSickDays: false,
+    paidVacationDays: 0,
   },
 };
 

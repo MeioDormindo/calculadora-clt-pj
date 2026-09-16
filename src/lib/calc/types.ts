@@ -57,6 +57,12 @@ export interface PjInput {
   holidaysPerYear: number;
   sickDaysPerYear: number;
   vacationDaysPerYear: number;
+
+  // Alguns contratos PJ cobrem parte dos dias parados. O que a empresa paga
+  // deixa de ser custo seu.
+  paidHolidays: boolean;
+  paidSickDays: boolean;
+  paidVacationDays: number;
 }
 
 export interface Line {
@@ -86,6 +92,8 @@ export interface LostDaysBreakdown {
   key: string;
   label: string;
   days: number;
+  paidDays: number;
+  unpaidDays: number;
   monthlyCost: number;
 }
 
@@ -93,6 +101,7 @@ export interface LostDaysCost {
   dailyRate: number;
   breakdown: LostDaysBreakdown[];
   totalLostDays: number;
+  totalUnpaidDays: number;
   annualCost: number;
   monthlyEquivalent: number;
 }

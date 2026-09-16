@@ -25,20 +25,56 @@ describe("impostos e contribuições do PJ", () => {
     expect(calculatePjInss(20000, "AUTONOMO", 0, 0)).toBeCloseTo(1695.11, 2);
   });
 
+  const dias = { ...sheetPj, holidaysPerYear: 12, sickDaysPerYear: 5, vacationDaysPerYear: 20 };
+
   it("custo dos dias parados sai da taxa diária", () => {
-    const result = calculateLostDaysCost(11000, 22, 12, 5, 20);
+    const result = calculateLostDaysCost(11000, dias);
     expect(result.dailyRate).toBeCloseTo(500, 2);
     expect(result.totalLostDays).toBe(37);
     expect(result.annualCost).toBeCloseTo(18500, 2);
   });
 
   it("separa feriados, doença e férias em linhas próprias", () => {
-    const { breakdown } = calculateLostDaysCost(11000, 22, 12, 5, 20);
+    const { breakdown } = calculateLostDaysCost(11000, dias);
     expect(breakdown.map((b) => b.key)).toEqual(["lostHolidays", "lostSick", "lostVacation"]);
     // Taxa diária de R$ 500: 12 feriados = 6.000/ano = 500/mês.
     expect(breakdown[0].monthlyCost).toBeCloseTo(500, 2);
     expect(breakdown[1].monthlyCost).toBeCloseTo(208.33, 2);
     expect(breakdown[2].monthlyCost).toBeCloseTo(833.33, 2);
+  });
+
+  it("zera o custo de feriados e atestados quando a empresa abona", () => {
+    const result = calculateLostDaysCost(11000, {
+      ...dias,
+      paidHolidays: true,
+      paidSickDays: true,
+    });
+    expect(result.breakdown[0].monthlyCost).toBe(0);
+    expect(result.breakdown[1].monthlyCost).toBe(0);
+    expect(result.breakdown[2].monthlyCost).toBeCloseTo(833.33, 2);
+    expect(result.totalUnpaidDays).toBe(20);
+    expect(result.totalLostDays).toBe(37);
+  });
+
+  it("cobra só os dias de férias que a empresa não paga", () => {
+    const result = calculateLostDaysCost(11000, { ...dias, paidVacationDays: 15 });
+    // Sobram 5 dos 20 dias: 5 x 500 = 2.500/ano.
+    expect(result.breakdown[2].unpaidDays).toBe(5);
+    expect(result.breakdown[2].monthlyCost).toBeCloseTo(208.33, 2);
+  });
+
+  it("não deixa dias pagos passarem do total de férias", () => {
+    const result = calculateLostDaysCost(11000, { ...dias, paidVacationDays: 99 });
+    expect(result.breakdown[2].unpaidDays).toBe(0);
+    expect(result.breakdown[2].monthlyCost).toBe(0);
+  });
+
+  it("descreve no rótulo quando a empresa cobre os dias", () => {
+    const abonado = calculateLostDaysCost(11000, { ...dias, paidHolidays: true });
+    expect(abonado.breakdown[0].label).toContain("pagos pela empresa");
+
+    const parcial = calculateLostDaysCost(11000, { ...dias, paidVacationDays: 15 });
+    expect(parcial.breakdown[2].label).toContain("5 de 20");
   });
 });
 
@@ -63,7 +99,11 @@ describe("lado PJ", () => {
   });
 
   it("expõe cada tipo de dia parado como custo separado", () => {
-    const pj = calculatePj(11000, { ...sheetPj, holidaysPerYear: 12, sickDaysPerYear: 5, vacationDaysPerYear: 20 }, clt);
+    const pj = calculatePj(
+      11000,
+      { ...sheetPj, holidaysPerYear: 12, sickDaysPerYear: 5, vacationDaysPerYear: 20 },
+      clt,
+    );
     const keys = pj.costs.map((c) => c.key);
     expect(keys).toContain("lostHolidays");
     expect(keys).toContain("lostSick");

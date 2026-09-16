@@ -1,7 +1,7 @@
 import type { PjInput } from "../../lib/calc/types";
 import { PJ_TAX_PRESETS, PJ_INSS_PRESETS, MEI_MONTHLY_LIMIT } from "../../lib/calc/constants";
 import { formatCurrency } from "../../lib/format";
-import { Field, SelectField } from "../ui/Field";
+import { Field, SelectField, ToggleField } from "../ui/Field";
 
 interface PjInputsProps {
   value: PjInput;
@@ -15,6 +15,10 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
 
   const inssPreset = PJ_INSS_PRESETS.find((p) => p.id === value.inssMode);
   const lostDays = value.holidaysPerYear + value.sickDaysPerYear + value.vacationDaysPerYear;
+  const unpaidDays =
+    (value.paidHolidays ? 0 : value.holidaysPerYear) +
+    (value.paidSickDays ? 0 : value.sickDaysPerYear) +
+    Math.max(0, value.vacationDaysPerYear - value.paidVacationDays);
   const overMei = value.taxRegime === "MEI" && value.proposedGross > MEI_MONTHLY_LIMIT;
 
   return (
@@ -98,37 +102,62 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
       </div>
 
       <details className="group" open>
-        <summary>Dias sem faturamento · {lostDays} dias/ano</summary>
+        <summary>
+          Dias parados · {unpaidDays} de {lostDays} dias/ano sem receber
+        </summary>
         <div className="group-body">
+          <p className="group-note">
+            Marque o que o contrato PJ cobre. O que a empresa paga deixa de ser custo seu.
+          </p>
+
+          <Field
+            label="Feriados"
+            suffix="dias"
+            value={value.holidaysPerYear}
+            onChange={(v) => setField("holidaysPerYear", v)}
+          />
+          <ToggleField
+            label="A empresa abona os feriados"
+            checked={value.paidHolidays}
+            onChange={(v) => setField("paidHolidays", v)}
+          />
+
+          <Field
+            label="Médico / doença"
+            suffix="dias"
+            value={value.sickDaysPerYear}
+            onChange={(v) => setField("sickDaysPerYear", v)}
+          />
+          <ToggleField
+            label="A empresa abona atestados"
+            checked={value.paidSickDays}
+            onChange={(v) => setField("paidSickDays", v)}
+          />
+
           <div className="field-row">
             <Field
-              label="Feriados"
-              suffix="dias"
-              value={value.holidaysPerYear}
-              onChange={(v) => setField("holidaysPerYear", v)}
-            />
-            <Field
-              label="Médico / doença"
-              suffix="dias"
-              value={value.sickDaysPerYear}
-              onChange={(v) => setField("sickDaysPerYear", v)}
-            />
-          </div>
-          <div className="field-row">
-            <Field
-              label="Férias"
+              label="Férias que você tira"
               suffix="dias"
               value={value.vacationDaysPerYear}
               onChange={(v) => setField("vacationDaysPerYear", v)}
             />
             <Field
-              label="Dias úteis no mês"
+              label="Dias de férias pagos"
               suffix="dias"
-              min={1}
-              value={value.workingDaysPerMonth}
-              onChange={(v) => setField("workingDaysPerMonth", v)}
+              max={value.vacationDaysPerYear}
+              value={value.paidVacationDays}
+              onChange={(v) => setField("paidVacationDays", v)}
             />
           </div>
+
+          <Field
+            label="Dias úteis no mês"
+            suffix="dias"
+            min={1}
+            value={value.workingDaysPerMonth}
+            onChange={(v) => setField("workingDaysPerMonth", v)}
+            hint="Base para converter os dias parados em dinheiro."
+          />
         </div>
       </details>
     </section>

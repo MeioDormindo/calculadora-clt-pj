@@ -492,6 +492,13 @@ code {
   animation: slide-down 0.22s var(--ease);
 }
 
+.group-note {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
 @keyframes slide-down {
   from {
     opacity: 0;

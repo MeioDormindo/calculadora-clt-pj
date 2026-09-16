@@ -28,15 +28,44 @@ describe("ponto de equilíbrio", () => {
     expect(comFora!).toBeGreaterThan(semFora!);
   });
 
+  const comDias = {
+    ...sheetPj,
+    holidaysPerYear: 12,
+    sickDaysPerYear: 5,
+    vacationDaysPerYear: 20,
+  };
+
   it("sobe quando há mais dias sem faturamento", () => {
     const without = findMinimumPjGross(clt, sheetPj);
-    const withDays = findMinimumPjGross(clt, {
-      ...sheetPj,
-      holidaysPerYear: 12,
-      sickDaysPerYear: 5,
-      vacationDaysPerYear: 20,
-    });
+    const withDays = findMinimumPjGross(clt, comDias);
     expect(withDays!).toBeGreaterThan(without!);
+  });
+
+  it("cai quando a empresa abona feriados e atestados", () => {
+    const semAbono = findMinimumPjGross(clt, comDias);
+    const comAbono = findMinimumPjGross(clt, {
+      ...comDias,
+      paidHolidays: true,
+      paidSickDays: true,
+    });
+    expect(comAbono!).toBeLessThan(semAbono!);
+  });
+
+  it("cai quando a empresa paga dias de férias", () => {
+    const semFerias = findMinimumPjGross(clt, comDias);
+    const comFerias = findMinimumPjGross(clt, { ...comDias, paidVacationDays: 20 });
+    expect(comFerias!).toBeLessThan(semFerias!);
+  });
+
+  it("com tudo abonado, o mínimo iguala o cenário sem dias parados", () => {
+    const semDias = findMinimumPjGross(clt, sheetPj);
+    const tudoPago = findMinimumPjGross(clt, {
+      ...comDias,
+      paidHolidays: true,
+      paidSickDays: true,
+      paidVacationDays: 20,
+    });
+    expect(tudoPago!).toBeCloseTo(semDias!, 1);
   });
 });
 

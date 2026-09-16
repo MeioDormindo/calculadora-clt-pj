@@ -34,4 +34,7 @@ export const sheetPj: PjInput = {
   holidaysPerYear: 0,
   sickDaysPerYear: 0,
   vacationDaysPerYear: 0,
+  paidHolidays: false,
+  paidSickDays: false,
+  paidVacationDays: 0,
 };

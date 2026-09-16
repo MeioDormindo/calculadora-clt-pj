@@ -65,7 +65,7 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       prop: cost(proposed, "tax"),
     },
     ...proposed.lostDays.breakdown.map((item) => ({
-      label: `${item.label} sem faturar (${item.days} dias/ano)`,
+      label: item.label,
       clt: null,
       min: cost(minimum, item.key),
       prop: cost(proposed, item.key),
