@@ -12,6 +12,7 @@ import { CostAnalysisPanel } from "./components/Results/CostAnalysisPanel";
 import { PjDrivers } from "./components/Results/PjDrivers";
 import { Header } from "./components/Layout/Header";
 import { Footer } from "./components/Layout/Footer";
+import { Donate } from "./components/Layout/Donate";
 
 interface AppState {
   clt: CltInput;
@@ -79,6 +80,8 @@ function App() {
         <CostAnalysisPanel result={result} />
         <ComparisonTable result={result} />
       </div>
+
+      <Donate />
 
       <Footer />
 
