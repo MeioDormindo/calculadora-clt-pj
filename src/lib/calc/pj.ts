@@ -1,5 +1,23 @@
 import type { PjInput, PjResult, CltResult, Line, LostDaysCost } from "./types";
-import { PJ_TAX_PRESETS, MINIMUM_WAGE, INSS_CEILING, MEI_MONTHLY_LIMIT } from "./constants";
+import {
+  PJ_TAX_PRESETS,
+  MINIMUM_WAGE,
+  INSS_CEILING,
+  MEI_MONTHLY_LIMIT,
+  FATOR_R_MIN,
+  PJ_ACTIVITIES,
+} from "./constants";
+
+/**
+ * Aplica a atividade escolhida sobre regime e INSS. Fora de "CUSTOM", a
+ * atividade manda: isso também corrige estados antigos salvos no navegador,
+ * de antes da atividade existir, que teriam regime e INSS descombinados.
+ */
+export function applyActivity(input: PjInput): PjInput {
+  const activity = PJ_ACTIVITIES.find((a) => a.id === input.activity);
+  if (!activity || activity.id === "CUSTOM") return input;
+  return { ...input, taxRegime: activity.taxRegime, inssMode: activity.inssMode };
+}
 
 export function calculatePjTax(
   grossInvoice: number,
@@ -24,6 +42,9 @@ export function calculatePjInss(
       return 0;
     case "SIMPLES_PROLABORE":
       return MINIMUM_WAGE * 0.11;
+    case "FATOR_R":
+      // Pró-labore nunca abaixo do salário mínimo nem acima do teto do INSS.
+      return Math.min(Math.max(grossInvoice * FATOR_R_MIN, MINIMUM_WAGE), INSS_CEILING) * 0.11;
     case "AUTONOMO":
       return Math.min(grossInvoice, INSS_CEILING) * 0.2;
     case "CUSTOM":

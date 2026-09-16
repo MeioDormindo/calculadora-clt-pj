@@ -1,6 +1,6 @@
 import type { CltInput, PjInput, CltResult, PjResult, CostAnalysis, ComparisonResult } from "./types";
 import { calculateClt } from "./clt";
-import { calculatePj } from "./pj";
+import { calculatePj, applyActivity } from "./pj";
 import { findMinimumPjGross } from "./breakeven";
 
 function pct(delta: number, base: number): number {
@@ -22,7 +22,8 @@ function analyse(clt: CltResult, pj: PjResult): CostAnalysis {
   };
 }
 
-export function compareCltVsPj(cltInput: CltInput, pjInput: PjInput): ComparisonResult {
+export function compareCltVsPj(cltInput: CltInput, rawPjInput: PjInput): ComparisonResult {
+  const pjInput = applyActivity(rawPjInput);
   const clt = calculateClt(cltInput);
   const proposed = calculatePj(pjInput.proposedGross, pjInput, clt);
 

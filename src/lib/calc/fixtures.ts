@@ -23,6 +23,7 @@ export const sheetClt: CltInput = {
 
 export const sheetPj: PjInput = {
   proposedGross: 15000,
+  activity: "CUSTOM",
   taxRegime: "SIMPLES_III",
   manualTaxRatePct: 6,
   inssMode: "SIMPLES_PROLABORE",

@@ -1,5 +1,11 @@
 import type { PjInput } from "../../lib/calc/types";
-import { PJ_TAX_PRESETS, PJ_INSS_PRESETS, MEI_MONTHLY_LIMIT } from "../../lib/calc/constants";
+import {
+  PJ_TAX_PRESETS,
+  PJ_INSS_PRESETS,
+  PJ_ACTIVITIES,
+  MEI_MONTHLY_LIMIT,
+} from "../../lib/calc/constants";
+import { applyActivity } from "../../lib/calc/pj";
 import { formatCurrency } from "../../lib/format";
 import { Field, SelectField, ToggleField } from "../ui/Field";
 
@@ -13,13 +19,29 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
     onChange({ ...value, [key]: fieldValue });
   }
 
-  const inssPreset = PJ_INSS_PRESETS.find((p) => p.id === value.inssMode);
+  const activity = PJ_ACTIVITIES.find((a) => a.id === value.activity) ?? PJ_ACTIVITIES[0];
+  const isCustom = activity.id === "CUSTOM";
+  const effective = applyActivity(value);
+  const inssPreset = PJ_INSS_PRESETS.find((p) => p.id === effective.inssMode);
+
+  // Trocar de atividade também grava regime e INSS dela, para que "escolher
+  // manualmente" parta da última combinação em vez de valores antigos.
+  function chooseActivity(id: string) {
+    const next = PJ_ACTIVITIES.find((a) => a.id === id);
+    if (!next) return;
+    onChange(
+      id === "CUSTOM"
+        ? { ...effective, activity: id }
+        : { ...value, activity: id, taxRegime: next.taxRegime, inssMode: next.inssMode },
+    );
+  }
+
   const lostDays = value.holidaysPerYear + value.sickDaysPerYear + value.vacationDaysPerYear;
   const unpaidDays =
     (value.paidHolidays ? 0 : value.holidaysPerYear) +
     (value.paidSickDays ? 0 : value.sickDaysPerYear) +
     Math.max(0, value.vacationDaysPerYear - value.paidVacationDays);
-  const overMei = value.taxRegime === "MEI" && value.proposedGross > MEI_MONTHLY_LIMIT;
+  const overMei = effective.taxRegime === "MEI" && value.proposedGross > MEI_MONTHLY_LIMIT;
 
   return (
     <section className="card pj">
@@ -37,11 +59,21 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
       />
 
       <SelectField
-        label="Regime tributário"
-        value={value.taxRegime}
-        options={PJ_TAX_PRESETS}
-        onChange={(v) => setField("taxRegime", v)}
+        label="Qual atividade você exerce ou vai exercer?"
+        value={activity.id}
+        options={PJ_ACTIVITIES}
+        onChange={chooseActivity}
+        hint={activity.description}
       />
+
+      {isCustom && (
+        <SelectField
+          label="Regime tributário"
+          value={value.taxRegime}
+          options={PJ_TAX_PRESETS}
+          onChange={(v) => setField("taxRegime", v)}
+        />
+      )}
 
       {overMei && (
         <p className="alert">
@@ -50,7 +82,7 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
         </p>
       )}
 
-      {value.taxRegime === "MANUAL" && (
+      {isCustom && value.taxRegime === "MANUAL" && (
         <Field
           label="Taxa de imposto"
           suffix="%"
@@ -60,15 +92,17 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
         />
       )}
 
-      <SelectField
-        label="INSS (contribuinte individual)"
-        value={value.inssMode}
-        options={PJ_INSS_PRESETS}
-        onChange={(v) => setField("inssMode", v)}
-        hint={inssPreset?.description}
-      />
+      {isCustom && (
+        <SelectField
+          label="INSS (contribuinte individual)"
+          value={value.inssMode}
+          options={PJ_INSS_PRESETS}
+          onChange={(v) => setField("inssMode", v)}
+          hint={inssPreset?.description}
+        />
+      )}
 
-      {value.inssMode === "CUSTOM" && (
+      {isCustom && value.inssMode === "CUSTOM" && (
         <div className="field-row">
           <Field
             label="Percentual"

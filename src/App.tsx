@@ -41,9 +41,10 @@ const defaultState: AppState = {
   },
   pj: {
     proposedGross: 15000,
+    activity: "TI",
     taxRegime: "SIMPLES_III",
     manualTaxRatePct: 6,
-    inssMode: "SIMPLES_PROLABORE",
+    inssMode: "FATOR_R",
     customInssRatePct: 11,
     customInssBase: 0,
     accountantFee: 600,

@@ -68,6 +68,7 @@ export interface PjTaxPreset {
 
 export const PJ_TAX_PRESETS: PjTaxPreset[] = [
   { id: "MEI", label: "MEI (DAS fixo — serviços)", rate: null, fixedMonthly: 86.05 },
+  { id: "SIMPLES_I", label: "Simples Nacional — Anexo I (~4%)", rate: 0.04 },
   { id: "SIMPLES_III", label: "Simples Nacional — Anexo III (~6%)", rate: 0.06 },
   { id: "SIMPLES_V", label: "Simples Nacional — Anexo V (~15,5%)", rate: 0.155 },
   { id: "MANUAL", label: "Taxa manual", rate: null },
@@ -88,7 +89,12 @@ export const PJ_INSS_PRESETS: PjInssPreset[] = [
   {
     id: "SIMPLES_PROLABORE",
     label: "Simples Nacional (pró-labore)",
-    description: "11% sobre 1 salário mínimo de pró-labore — comum entre PJs de TI",
+    description: "11% sobre 1 salário mínimo de pró-labore. Em serviços sujeitos ao Fator R, isso leva ao Anexo V",
+  },
+  {
+    id: "FATOR_R",
+    label: "Simples Nacional (Fator R)",
+    description: "Pró-labore de 28% do faturamento, com INSS de 11% sobre ele — o que garante o Anexo III",
   },
   {
     id: "AUTONOMO",
@@ -107,3 +113,90 @@ export const DEFAULT_WORKING_DAYS_PER_MONTH = 22;
 export const DEFAULT_HOLIDAYS_PER_YEAR = 12;
 export const DEFAULT_SICK_DAYS_PER_YEAR = 5;
 export const DEFAULT_VACATION_DAYS_PER_YEAR = 20;
+
+// Fração mínima de pró-labore sobre o faturamento para serviços sujeitos ao
+// Fator R saírem do Anexo V (15,5%) e ficarem no Anexo III (6%).
+export const FATOR_R_MIN = 0.28;
+
+export interface PjActivity {
+  id: string;
+  label: string;
+  taxRegime: PjTaxRegimeId;
+  inssMode: PjInssModeId;
+  description: string;
+}
+
+// Alíquotas nominais da 1ª faixa do Simples (receita até R$ 180 mil/ano, ou
+// R$ 15 mil/mês). Acima disso a alíquota efetiva sobe aos poucos.
+export const PJ_ACTIVITIES: PjActivity[] = [
+  {
+    id: "TI",
+    label: "Serviços de TI",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Anexo III (6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele.",
+  },
+  {
+    id: "PJ_EMPRESA",
+    label: "PJ em uma empresa (consultoria)",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Consultoria e serviço intelectual: Anexo III (6%) via Fator R.",
+  },
+  {
+    id: "ADMIN",
+    label: "Serviços administrativos",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+  },
+  {
+    id: "MEDICINA",
+    label: "Medicina",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Anexo III (6%) via Fator R. Sem pró-labore de 28%, cairia no Anexo V (15,5%).",
+  },
+  {
+    id: "SAUDE",
+    label: "Psicologia e outros da saúde",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+  },
+  {
+    id: "ENGENHARIA",
+    label: "Engenharia e arquitetura",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description: "Anexo III (6%) via Fator R, com pró-labore de 28% do faturamento.",
+  },
+  {
+    id: "MARKETING",
+    label: "Marketing e publicidade",
+    taxRegime: "SIMPLES_III",
+    inssMode: "SIMPLES_PROLABORE",
+    description: "Anexo III (6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
+  },
+  {
+    id: "COMERCIO",
+    label: "Comércio",
+    taxRegime: "SIMPLES_I",
+    inssMode: "SIMPLES_PROLABORE",
+    description: "Anexo I (4%). Pró-labore de 1 salário mínimo.",
+  },
+  {
+    id: "MEI",
+    label: "MEI (atividades permitidas)",
+    taxRegime: "MEI",
+    inssMode: "MEI",
+    description: "DAS fixo com INSS incluso. Teto de R$ 81 mil/ano, e nem toda profissão pode ser MEI.",
+  },
+  {
+    id: "CUSTOM",
+    label: "Outra / escolher manualmente",
+    taxRegime: "SIMPLES_V",
+    inssMode: "SIMPLES_PROLABORE",
+    description: "Você escolhe o regime tributário e a contribuição ao INSS.",
+  },
+];

@@ -12,9 +12,9 @@ export interface IrrfBracket {
   deduction: number;
 }
 
-export type PjTaxRegimeId = "MEI" | "SIMPLES_III" | "SIMPLES_V" | "MANUAL";
+export type PjTaxRegimeId = "MEI" | "SIMPLES_I" | "SIMPLES_III" | "SIMPLES_V" | "MANUAL";
 
-export type PjInssModeId = "MEI" | "SIMPLES_PROLABORE" | "AUTONOMO" | "CUSTOM";
+export type PjInssModeId = "MEI" | "SIMPLES_PROLABORE" | "FATOR_R" | "AUTONOMO" | "CUSTOM";
 
 export interface CltInput {
   grossSalary: number;
@@ -46,6 +46,8 @@ export interface CltInput {
 
 export interface PjInput {
   proposedGross: number;
+  /** Atividade escolhida; define regime e INSS, exceto em "CUSTOM". */
+  activity: string;
   taxRegime: PjTaxRegimeId;
   manualTaxRatePct: number;
   inssMode: PjInssModeId;

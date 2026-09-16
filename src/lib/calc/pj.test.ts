@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { calculatePjTax, calculatePjInss, calculateLostDaysCost, calculatePj } from "./pj";
+import {
+  calculatePjTax,
+  calculatePjInss,
+  calculateLostDaysCost,
+  calculatePj,
+  applyActivity,
+} from "./pj";
+import { PJ_ACTIVITIES, PJ_TAX_PRESETS, PJ_INSS_PRESETS, INSS_CEILING } from "./constants";
 import { calculateClt } from "./clt";
 import { sheetClt, sheetPj } from "./fixtures";
 
@@ -115,5 +122,57 @@ describe("lado PJ", () => {
     const mei = { ...sheetPj, taxRegime: "MEI" as const };
     expect(calculatePj(6000, mei, clt).exceedsMeiLimit).toBe(false);
     expect(calculatePj(15000, mei, clt).exceedsMeiLimit).toBe(true);
+  });
+});
+
+describe("atividade do PJ", () => {
+  it("INSS no Fator R é 11% sobre pró-labore de 28% do faturamento", () => {
+    // 15.000 x 28% = 4.200 de pró-labore; 11% disso = 462.
+    expect(calculatePjInss(15000, "FATOR_R", 0, 0)).toBeCloseTo(462, 2);
+  });
+
+  it("pró-labore do Fator R respeita salário mínimo e teto do INSS", () => {
+    expect(calculatePjInss(1000, "FATOR_R", 0, 0)).toBeCloseTo(1621 * 0.11, 2);
+    expect(calculatePjInss(100000, "FATOR_R", 0, 0)).toBeCloseTo(INSS_CEILING * 0.11, 2);
+  });
+
+  it("Comércio usa o Anexo I, de 4%", () => {
+    expect(calculatePjTax(10000, "SIMPLES_I", 0)).toBeCloseTo(400, 2);
+  });
+
+  it("toda atividade aponta para regime e INSS que existem", () => {
+    const regimes = PJ_TAX_PRESETS.map((p) => p.id);
+    const inss = PJ_INSS_PRESETS.map((p) => p.id);
+    for (const activity of PJ_ACTIVITIES) {
+      expect(regimes).toContain(activity.taxRegime);
+      expect(inss).toContain(activity.inssMode);
+    }
+  });
+
+  it("fora do modo manual, a atividade manda no regime e no INSS", () => {
+    const resolvido = applyActivity({
+      ...sheetPj,
+      activity: "TI",
+      taxRegime: "SIMPLES_V",
+      inssMode: "AUTONOMO",
+    });
+    expect(resolvido.taxRegime).toBe("SIMPLES_III");
+    expect(resolvido.inssMode).toBe("FATOR_R");
+  });
+
+  it("corrige estado antigo salvo no navegador, de antes das atividades", () => {
+    // Merge do localStorage: activity vem do padrão novo, o resto do salvo.
+    const antigo = { ...sheetPj, activity: "TI", inssMode: "SIMPLES_PROLABORE" as const };
+    expect(applyActivity(antigo).inssMode).toBe("FATOR_R");
+  });
+
+  it("no modo manual, respeita o que foi escolhido", () => {
+    const manual = { ...sheetPj, activity: "CUSTOM", taxRegime: "SIMPLES_V" as const };
+    expect(applyActivity(manual)).toEqual(manual);
+  });
+
+  it("atividade desconhecida não quebra o cálculo", () => {
+    const estranho = { ...sheetPj, activity: "NAO_EXISTE" };
+    expect(applyActivity(estranho)).toEqual(estranho);
   });
 });
