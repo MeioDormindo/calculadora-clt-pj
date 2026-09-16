@@ -342,17 +342,6 @@ code {
   padding-inline-start: 0;
 }
 
-.field-control input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.field-control input::-webkit-outer-spin-button,
-.field-control input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
 .field-control.select {
   position: relative;
 }
