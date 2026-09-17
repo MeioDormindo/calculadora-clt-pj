@@ -11,10 +11,12 @@ function MonthGrid({
   month,
   billed,
   hours,
+  workedHours,
 }: {
   month: CalendarMonth;
   billed: number;
   hours: number | null;
+  workedHours: number;
 }) {
   const daysInMonth = new Date(Date.UTC(month.year, month.month, 0)).getUTCDate();
   const offset = new Date(Date.UTC(month.year, month.month - 1, 1)).getUTCDay();
@@ -67,7 +69,9 @@ function MonthGrid({
             ` · ${month.holidays.length} ${month.holidays.length === 1 ? "feriado" : "feriados"}`}
         </span>
         <span className="cal-billed">
-          {hours !== null && `${Math.round(hours * 10) / 10}h · `}
+          {hours !== null
+            ? `${Math.round(hours * 10) / 10}h · `
+            : `${Math.round(workedHours * 10) / 10}h trabalhadas · `}
           {formatCurrency(billed)}
         </span>
       </footer>
@@ -78,7 +82,8 @@ function MonthGrid({
 export function ContractCalendarCard({ result }: { result: ComparisonResult }) {
   const { calendar, proposed } = result;
   const [showAll, setShowAll] = useState(false);
-  const { perMonth, hourlyRate } = proposed.billing;
+  const { perMonth, hourlyRate, totalWorkedHours, effectiveHourlyRate, contractedHourlyRate } =
+    proposed.billing;
 
   const months = showAll ? calendar.months : calendar.months.slice(0, VISIBLE_MONTHS);
   const hidden = calendar.months.length - months.length;
@@ -104,12 +109,21 @@ export function ContractCalendarCard({ result }: { result: ComparisonResult }) {
           <span>Feriados em dia útil</span>
           <strong>{calendar.totalHolidays}</strong>
         </div>
-        {hourlyRate !== null && (
+        {hourlyRate !== null ? (
           <div>
             <span>Horas faturadas</span>
             <strong>{Math.round(totalHours).toLocaleString("pt-BR")}h</strong>
           </div>
+        ) : (
+          <div>
+            <span>Horas trabalhadas</span>
+            <strong>{Math.round(totalWorkedHours).toLocaleString("pt-BR")}h</strong>
+          </div>
         )}
+        <div>
+          <span>Hora efetiva (contratada {formatCurrency(contractedHourlyRate)})</span>
+          <strong>{formatCurrency(effectiveHourlyRate)}</strong>
+        </div>
         <div>
           <span>Faturado no período</span>
           <strong>{formatCurrency(totalBilled)}</strong>
@@ -133,7 +147,13 @@ export function ContractCalendarCard({ result }: { result: ComparisonResult }) {
 
       <div className="cal-months">
         {months.map((m, i) => (
-          <MonthGrid key={`${m.year}-${m.month}`} month={m} billed={perMonth[i].billed} hours={perMonth[i].hours} />
+          <MonthGrid
+            key={`${m.year}-${m.month}`}
+            month={m}
+            billed={perMonth[i].billed}
+            hours={perMonth[i].hours}
+            workedHours={perMonth[i].workedHours}
+          />
         ))}
       </div>
 
@@ -160,8 +180,8 @@ export function ContractCalendarCard({ result }: { result: ComparisonResult }) {
 
       {!calendar.allYearsFromTable && (
         <p className="group-note">
-          Algum ano do período está depois da tabela escrita no código: os feriados dele foram
-          calculados pela regra da Páscoa.
+          Algum ano do período está fora da tabela escrita no código (2025 a 2032): os feriados
+          dele foram calculados pela regra da Páscoa.
         </p>
       )}
     </section>

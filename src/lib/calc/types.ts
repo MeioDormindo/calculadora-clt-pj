@@ -170,13 +170,21 @@ export interface MonthBilling {
   holidays: number;
   /** Horas faturadas no mês (só no modo por hora). */
   hours: number | null;
+  /** Horas de fato trabalhadas: dias úteis sem feriado x horas por dia. */
+  workedHours: number;
   /** Faturado no mês, antes de doença, férias e feriados locais. */
   billed: number;
 }
 
 export interface PjBilling {
   months: number;
+  /** Valor da hora no modo por hora; null no valor fixo. */
   hourlyRate: number | null;
+  /** Valor ÷ horas mensais informadas, nos dois modos. */
+  contractedHourlyRate: number;
+  totalWorkedHours: number;
+  /** Faturado no período ÷ horas trabalhadas no calendário real. */
+  effectiveHourlyRate: number;
   /** Valor médio de um dia útil. */
   dailyValue: number;
   lines: BillingLine[];

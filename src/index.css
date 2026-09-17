@@ -1491,3 +1491,46 @@ code {
 .contract-totals {
   margin-top: 4px;
 }
+
+/* ---------- relatório ---------- */
+
+.report-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.report-button {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--clt);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 18px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: filter 0.18s var(--ease), transform 0.18s var(--ease);
+}
+
+.report-button:hover {
+  filter: brightness(1.07);
+}
+
+.report-button:active {
+  transform: scale(0.98);
+}
+
+.report-button:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.report-hint {
+  font-size: 12px;
+  color: var(--ink-muted);
+  flex: 1;
+  min-width: 200px;
+}

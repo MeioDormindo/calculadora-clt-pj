@@ -45,15 +45,18 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
   const start = parseYearMonth(value.contractStart);
   const calendar = buildContractCalendar(start, value.contractMonths, value.includeOptionalHolidays);
   const hourly = value.billingMode === "HOURLY";
-  const hourlyRate = hourly && value.monthlyHours > 0 ? value.proposedGross / value.monthlyHours : 0;
+  const contractedHourlyRate = value.monthlyHours > 0 ? value.proposedGross / value.monthlyHours : 0;
 
-  // Início: "este mês" (automático, acompanha a data de hoje) ou um dos
-  // próximos 24 meses. Um valor salvo fora dessa janela continua na lista.
+  // Início: "este mês" (automático, acompanha a data de hoje) ou qualquer mês
+  // de janeiro do ano passado até 24 meses à frente — contratos já em
+  // andamento também entram. Um valor salvo fora dessa janela continua na lista.
   const now = currentYearMonth();
+  const firstIndex = (now.year - 1) * 12;
+  const lastIndex = now.year * 12 + now.month - 1 + 24;
   const startOptions = [
     { id: "AUTO", label: "Este mês (automático)" },
-    ...Array.from({ length: 24 }, (_, i) => {
-      const index = now.year * 12 + now.month - 1 + i;
+    ...Array.from({ length: lastIndex - firstIndex + 1 }, (_, i) => {
+      const index = firstIndex + i;
       const ym = { year: Math.floor(index / 12), month: (index % 12) + 1 };
       return { id: `${ym.year}-${String(ym.month).padStart(2, "0")}`, label: formatYearMonth(ym) };
     }),
@@ -91,35 +94,34 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
         onChange={(v) => setField("billingMode", v)}
         hint={
           hourly
-            ? "Você informa quantas horas por mês esse valor paga; o calendário real diz quantas horas cada mês tem de fato."
-            : "O valor do dia é o valor mensal dividido pelos dias úteis de cada mês do calendário."
+            ? "O valor paga as horas mensais abaixo; cada mês fatura as horas que o calendário real tem."
+            : "O mês paga o mesmo valor; o valor do dia é ele dividido pelos dias úteis de cada mês."
         }
       />
 
-      {hourly && (
-        <>
-          <div className="field-row">
-            <Field
-              label="Horas mensais desse valor"
-              suffix="h"
-              min={1}
-              value={value.monthlyHours}
-              onChange={(v) => setField("monthlyHours", v)}
-            />
-            <Field
-              label="Horas por dia"
-              suffix="h"
-              min={1}
-              max={24}
-              value={value.hoursPerDay}
-              onChange={(v) => setField("hoursPerDay", v)}
-            />
-          </div>
-          <p className="group-note">
-            Valor da hora: <strong>{formatCurrency(hourlyRate)}</strong>
-          </p>
-        </>
-      )}
+      <div className="field-row">
+        <Field
+          label="Horas mensais desse valor"
+          suffix="h"
+          min={1}
+          value={value.monthlyHours}
+          onChange={(v) => setField("monthlyHours", v)}
+        />
+        <Field
+          label="Horas por dia"
+          suffix="h"
+          min={1}
+          max={24}
+          value={value.hoursPerDay}
+          onChange={(v) => setField("hoursPerDay", v)}
+        />
+      </div>
+      <p className="group-note">
+        Hora contratada: <strong>{formatCurrency(contractedHourlyRate)}</strong>
+        {hourly
+          ? " — é o que você fatura por hora trabalhada."
+          : " — no valor fixo o mês paga o mesmo, então o calendário abaixo mostra quanto a hora vale de fato."}
+      </p>
 
       <details className="group" open>
         <summary>

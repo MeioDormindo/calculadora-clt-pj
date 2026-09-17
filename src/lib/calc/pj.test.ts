@@ -292,3 +292,22 @@ describe("faturamento com calendário real", () => {
     expect(pj.employerCost).toBeCloseTo(16800, 2);
   });
 });
+
+describe("horas no valor fixo", () => {
+  it("mostra a hora contratada e a hora efetiva do calendário", () => {
+    // Fevereiro de 2026 com Carnaval: 18 dias trabalhados x 8h = 144h.
+    // 16.000 por 160h = R$ 100 contratada; feriados pagos -> fatura 16.000 ÷ 144h.
+    const fev = buildContractCalendar({ year: 2026, month: 2 }, 1, true);
+    const billing = calculatePjBilling(16000, { ...sheetPj, monthlyHours: 160, hoursPerDay: 8 }, fev);
+    expect(billing.hourlyRate).toBeNull();
+    expect(billing.contractedHourlyRate).toBeCloseTo(100, 6);
+    expect(billing.totalWorkedHours).toBe(144);
+    expect(billing.effectiveHourlyRate).toBeCloseTo(16000 / 144, 6);
+  });
+
+  it("horas trabalhadas não contam feriado, mesmo pago", () => {
+    const fev = buildContractCalendar({ year: 2026, month: 2 }, 1, true);
+    const billing = calculatePjBilling(16000, { ...sheetPj, paidHolidays: true, hoursPerDay: 8 }, fev);
+    expect(billing.perMonth[0].workedHours).toBe(18 * 8);
+  });
+});

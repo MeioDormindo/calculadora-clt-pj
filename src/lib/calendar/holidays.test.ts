@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import { HOLIDAYS_BY_YEAR, computeHolidays, easterSunday, getHolidays } from "./holidays";
 
 describe("tabela de feriados", () => {
-  it("cobre pelo menos 5 anos a partir de 2026", () => {
-    for (let year = 2026; year <= 2030; year++) expect(HOLIDAYS_BY_YEAR[year]).toBeDefined();
+  it("cobre o ano passado e pelo menos 5 anos à frente de 2026", () => {
+    for (let year = 2025; year <= 2031; year++) expect(HOLIDAYS_BY_YEAR[year]).toBeDefined();
+  });
+
+  it("2025 tem Carnaval em 3 e 4/3 e Corpus Christi em 19/6", () => {
+    const datas = HOLIDAYS_BY_YEAR[2025].filter((h) => h.kind === "facultativo").map((h) => h.date);
+    expect(datas).toEqual(["2025-03-03", "2025-03-04", "2025-06-19"]);
   });
 
   it("2026 bate com a Portaria MGI nº 11.460/2025", () => {
@@ -31,7 +36,8 @@ describe("tabela de feriados", () => {
 });
 
 describe("Páscoa e datas móveis", () => {
-  it("bate com as datas publicadas de 2026 a 2030", () => {
+  it("bate com as datas publicadas de 2025 a 2030", () => {
+    expect(easterSunday(2025)).toEqual({ month: 4, day: 20 });
     expect(easterSunday(2026)).toEqual({ month: 4, day: 5 });
     expect(easterSunday(2027)).toEqual({ month: 3, day: 28 });
     expect(easterSunday(2028)).toEqual({ month: 4, day: 16 });

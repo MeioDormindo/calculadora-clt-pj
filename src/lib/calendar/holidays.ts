@@ -13,7 +13,7 @@ export interface Holiday {
 }
 
 /**
- * Feriados de 2026 a 2032, escritos por extenso para poderem ser conferidos.
+ * Feriados de 2025 a 2032, escritos por extenso para poderem ser conferidos.
  * 2026 bate com a Portaria MGI nº 11.460/2025. As datas móveis vêm da Páscoa
  * (Paixão = Páscoa − 2, Carnaval = − 48 e − 47, Corpus Christi = + 60).
  * Ficam de fora os pontos facultativos só do serviço público (Dia do
@@ -21,6 +21,21 @@ export interface Holiday {
  * Acrescente um ano novo aqui quando a portaria dele sair.
  */
 export const HOLIDAYS_BY_YEAR: Record<number, Holiday[]> = {
+  2025: [
+    { date: "2025-01-01", name: "Confraternização Universal", kind: "nacional" },
+    { date: "2025-03-03", name: "Carnaval (segunda)", kind: "facultativo" },
+    { date: "2025-03-04", name: "Carnaval (terça)", kind: "facultativo" },
+    { date: "2025-04-18", name: "Paixão de Cristo", kind: "nacional" },
+    { date: "2025-04-21", name: "Tiradentes", kind: "nacional" },
+    { date: "2025-05-01", name: "Dia do Trabalho", kind: "nacional" },
+    { date: "2025-06-19", name: "Corpus Christi", kind: "facultativo" },
+    { date: "2025-09-07", name: "Independência do Brasil", kind: "nacional" },
+    { date: "2025-10-12", name: "Nossa Senhora Aparecida", kind: "nacional" },
+    { date: "2025-11-02", name: "Finados", kind: "nacional" },
+    { date: "2025-11-15", name: "Proclamação da República", kind: "nacional" },
+    { date: "2025-11-20", name: "Consciência Negra", kind: "nacional" },
+    { date: "2025-12-25", name: "Natal", kind: "nacional" },
+  ],
   2026: [
     { date: "2026-01-01", name: "Confraternização Universal", kind: "nacional" },
     { date: "2026-02-16", name: "Carnaval (segunda)", kind: "facultativo" },

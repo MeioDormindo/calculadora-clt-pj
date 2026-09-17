@@ -11,6 +11,7 @@ import { ComparisonTable } from "./components/Results/ComparisonTable";
 import { CostAnalysisPanel } from "./components/Results/CostAnalysisPanel";
 import { PjDrivers } from "./components/Results/PjDrivers";
 import { PayslipCard } from "./components/Results/PayslipCard";
+import { ReportButton } from "./components/Results/ReportButton";
 import { ContractTotalsCard } from "./components/Results/ContractTotalsCard";
 import { ContractCalendarCard } from "./components/Results/ContractCalendarCard";
 import { Header } from "./components/Layout/Header";
@@ -86,6 +87,7 @@ function App() {
 
       <div ref={resultsRef} className="app-shell-results">
         <BreakevenCallout result={result} />
+        <ReportButton result={result} clt={state.clt} pj={state.pj} />
         <ComparisonSummary result={result} />
         <PayslipCard result={result} />
         <ContractTotalsCard result={result} />

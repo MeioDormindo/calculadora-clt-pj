@@ -135,6 +135,7 @@ export function calculatePjBilling(
       workdays: m.workdays,
       holidays: m.holidays.length,
       hours: hourly ? billedDays * hoursPerDay : null,
+      workedHours: m.workdays * hoursPerDay,
       billed: hourly
         ? (hourlyRate ?? 0) * hoursPerDay * billedDays
         : proposal - dayValue(m.weekdays) * unpaidHolidays,
@@ -206,10 +207,15 @@ export function calculatePjBilling(
   }
 
   const totalLoss = lines.reduce((sum, line) => sum + line.monthlyCost, 0);
+  const totalWorkedHours = perMonth.reduce((sum, m) => sum + m.workedHours, 0);
+  const totalBilledInCalendar = perMonth.reduce((sum, m) => sum + m.billed, 0);
 
   return {
     months,
     hourlyRate,
+    contractedHourlyRate: input.monthlyHours > 0 ? proposal / input.monthlyHours : 0,
+    totalWorkedHours,
+    effectiveHourlyRate: totalWorkedHours > 0 ? totalBilledInCalendar / totalWorkedHours : 0,
     dailyValue: averageDailyValue,
     lines,
     billedMonthly: proposal - totalLoss,
