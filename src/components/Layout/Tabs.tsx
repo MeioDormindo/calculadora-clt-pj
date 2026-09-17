@@ -2,6 +2,7 @@ import type { Tab } from "../../hooks/useHashTab";
 
 const TABS: { id: Tab; label: string; href: string }[] = [
   { id: "calculadora", label: "Calculadora", href: "#" },
+  { id: "demissao", label: "Demissão", href: "#demissao" },
   { id: "contadores", label: "Contadores", href: "#contadores" },
 ];
 

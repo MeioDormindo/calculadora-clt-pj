@@ -1776,3 +1776,119 @@ code {
 .hero-goal {
   margin-top: 4px;
 }
+
+/* ---------- demissão ---------- */
+
+.hero.pending .hero-figure {
+  font-size: clamp(20px, 5vw, 26px);
+  color: var(--ink-2);
+}
+
+.rescission-table th[scope="row"] {
+  white-space: normal;
+}
+
+.rescission-table td {
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.item-detail {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink-muted);
+  max-width: 62ch;
+}
+
+.rescission-table tr.subtotal th,
+.rescission-table tr.subtotal td,
+.rescission-compare tr.subtotal th,
+.rescission-compare tr.subtotal td {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.rescission-compare th.selected,
+.rescission-compare td.selected {
+  background: color-mix(in oklab, var(--clt) 9%, transparent);
+}
+
+.rescission-compare thead th {
+  vertical-align: bottom;
+}
+
+.compare-badge {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--clt);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+button.compare-badge.link {
+  font: inherit;
+  font-size: 11px;
+  padding: 0;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+button.compare-badge.link:hover {
+  color: var(--clt);
+}
+
+.kv-list {
+  display: grid;
+  gap: 0;
+  margin: 12px 0 0;
+}
+
+.kv-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.kv-list > div:last-child {
+  border-bottom: none;
+}
+
+.kv-list dt {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.kv-list dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tiles.compact {
+  margin-top: 12px;
+}
+
+.notes-list {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.field-control input[type="date"] {
+  color-scheme: light dark;
+}

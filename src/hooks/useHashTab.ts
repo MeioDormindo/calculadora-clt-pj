@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 
-export type Tab = "calculadora" | "contadores";
+export type Tab = "calculadora" | "demissao" | "contadores";
+
+const TAB_TITLES: Record<Tab, string> = {
+  calculadora: "CLT vs PJ",
+  demissao: "Demissão · CLT vs PJ",
+  contadores: "Contadores · CLT vs PJ",
+};
 
 /** "#contadores" -> "contadores"; qualquer outra coisa abre a calculadora. */
 export function tabFromHash(hash: string): Tab {
-  return hash.replace(/^#\/?/, "") === "contadores" ? "contadores" : "calculadora";
+  const id = hash.replace(/^#\/?/, "");
+  return id === "contadores" || id === "demissao" ? id : "calculadora";
 }
 
 /**
@@ -25,7 +32,7 @@ export function useHashTab(): Tab {
   }, []);
 
   useEffect(() => {
-    document.title = tab === "contadores" ? "Contadores · CLT vs PJ" : "CLT vs PJ";
+    document.title = TAB_TITLES[tab];
   }, [tab]);
 
   return tab;

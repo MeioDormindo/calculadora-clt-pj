@@ -163,3 +163,29 @@ export function ToggleField({ label, checked, onChange }: ToggleFieldProps) {
     </label>
   );
 }
+
+interface DateFieldProps {
+  label: string;
+  /** "AAAA-MM-DD" ou "" */
+  value: string;
+  onChange: (value: string) => void;
+  hint?: string;
+  min?: string;
+  max?: string;
+}
+
+export function DateField({ label, value, onChange, hint, min, max }: DateFieldProps) {
+  const id = useId();
+
+  return (
+    <div className="field">
+      <span className="field-label">
+        <label htmlFor={id}>{label}</label>
+      </span>
+      <span className="field-control">
+        <input id={id} type="date" value={value} min={min} max={max} onChange={(e) => onChange(e.target.value)} />
+      </span>
+      {hint && <span className="field-hint">{hint}</span>}
+    </div>
+  );
+}

@@ -1,9 +1,11 @@
 import type { CltInput, PjInput } from "./calc/types";
 import { MINIMUM_WAGE } from "./calc/constants";
+import type { RescissionInput } from "./rescission/rescission";
 
 export interface AppState {
   clt: CltInput;
   pj: PjInput;
+  rescission: RescissionInput;
 }
 
 /**
@@ -59,6 +61,17 @@ export function createDefaultState(): AppState {
       paidHolidays: false,
       paidSickDays: false,
       paidVacationDays: 0,
+    },
+    rescission: {
+      admissionDate: null,
+      terminationDate: null,
+      type: "SEM_JUSTA_CAUSA",
+      noticeMode: "INDENIZADO",
+      expiredVacationPeriods: 0,
+      fgtsBalance: null,
+      saqueAniversario: false,
+      thirteenthAdvancePaid: false,
+      unemploymentRequests: 0,
     },
   };
 }

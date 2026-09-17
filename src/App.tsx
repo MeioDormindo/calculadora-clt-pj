@@ -21,6 +21,7 @@ import { Tabs } from "./components/Layout/Tabs";
 import { AccountantsPage } from "./components/Accountants/AccountantsPage";
 import { useHashTab } from "./hooks/useHashTab";
 import { ResetButton } from "./components/InputForm/ResetButton";
+import { RescissionPage } from "./components/Rescission/RescissionPage";
 
 
 function App() {
@@ -33,10 +34,20 @@ function App() {
   return (
     <div className="app-shell">
       <Tabs current={tab} />
-      <Header />
+      <Header tab={tab} />
 
       {tab === "contadores" ? (
         <AccountantsPage />
+      ) : tab === "demissao" ? (
+        <>
+          <ResetButton onReset={resetState} />
+          <RescissionPage
+            clt={state.clt}
+            value={state.rescission}
+            onCltChange={(clt) => setState({ ...state, clt })}
+            onChange={(rescission) => setState({ ...state, rescission })}
+          />
+        </>
       ) : (
         <>
           <ResetButton onReset={resetState} />

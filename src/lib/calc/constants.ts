@@ -351,3 +351,27 @@ export const PJ_ACTIVITIES: PjActivity[] = [
       "Você escolhe o regime tributário e a contribuição ao INSS.",
   },
 ];
+
+// ---------- rescisão ----------
+
+// Lei 12.506/2011: aviso prévio de 30 dias + 3 por ano completo de serviço,
+// até 90 dias. O acréscimo só vale quando a empresa demite; no pedido de
+// demissão o empregado cumpre (ou indeniza) 30 dias.
+export const NOTICE_BASE_DAYS = 30;
+export const NOTICE_DAYS_PER_YEAR = 3;
+export const NOTICE_MAX_DAYS = 90;
+
+// Art. 484-A da CLT (demissão por acordo): metade do aviso indenizado, multa
+// de 20% do FGTS e saque de até 80% do saldo, sem seguro-desemprego.
+export const FGTS_AGREEMENT_FINE_RATE = 0.2;
+export const FGTS_AGREEMENT_WITHDRAWAL = 0.8;
+export const AGREEMENT_NOTICE_SHARE = 0.5;
+
+// Seguro-desemprego 2026 (MTE, vigente desde 11/01/2026). Base: média dos
+// últimos 3 salários. Nenhuma parcela é menor que o salário mínimo.
+export const UNEMPLOYMENT_FIRST_LIMIT = 2222.17;
+export const UNEMPLOYMENT_FIRST_RATE = 0.8;
+export const UNEMPLOYMENT_SECOND_LIMIT = 3703.99;
+export const UNEMPLOYMENT_SECOND_BASE = 1777.74;
+export const UNEMPLOYMENT_SECOND_RATE = 0.5;
+export const UNEMPLOYMENT_CEILING = 2518.65;

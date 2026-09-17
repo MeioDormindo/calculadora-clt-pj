@@ -5,6 +5,7 @@ describe("aba pela âncora da URL", () => {
   it("abre contadores com #contadores ou #/contadores", () => {
     expect(tabFromHash("#contadores")).toBe("contadores");
     expect(tabFromHash("#/contadores")).toBe("contadores");
+    expect(tabFromHash("#demissao")).toBe("demissao");
   });
 
   it("abre a calculadora sem âncora ou com âncora desconhecida", () => {
