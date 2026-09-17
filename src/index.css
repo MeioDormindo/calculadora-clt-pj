@@ -1534,3 +1534,153 @@ code {
   flex: 1;
   min-width: 200px;
 }
+
+/* ---------- abas ---------- */
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tab {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 9px 18px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.tab:hover {
+  color: var(--ink);
+  background: var(--surface-sunken);
+}
+
+.tab.active {
+  color: #fff;
+  background: var(--clt);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--clt);
+  outline-offset: 2px;
+}
+
+/* ---------- contadores ---------- */
+
+.accountants-intro {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.accountants-intro h2 {
+  font-size: 26px;
+}
+
+.accountants-intro p {
+  max-width: 60ch;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.accountants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.accountants-grid > * {
+  min-width: 0;
+}
+
+.accountants-empty {
+  text-align: center;
+  border-style: dashed;
+}
+
+.accountants-empty .card-title {
+  justify-content: center;
+}
+
+.accountants-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.accountants-contact .report-button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.accountants-copy {
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.accountants-copy:hover {
+  border-color: var(--clt);
+}
+
+.accountant-description {
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+
+.accountant-tags {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.accountant-tags li {
+  font-size: 12px;
+  color: var(--clt);
+  background: color-mix(in oklab, var(--clt) 12%, transparent);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.accountant-links {
+  display: flex;
+  gap: 14px;
+  font-size: 14px;
+}
+
+.accountant-links a {
+  color: var(--clt);
+}
+
+.accountants-disclaimer {
+  text-align: center;
+}

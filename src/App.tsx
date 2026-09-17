@@ -17,6 +17,9 @@ import { ContractCalendarCard } from "./components/Results/ContractCalendarCard"
 import { Header } from "./components/Layout/Header";
 import { Footer } from "./components/Layout/Footer";
 import { Donate } from "./components/Layout/Donate";
+import { Tabs } from "./components/Layout/Tabs";
+import { AccountantsPage } from "./components/Accountants/AccountantsPage";
+import { useHashTab } from "./hooks/useHashTab";
 
 interface AppState {
   clt: CltInput;
@@ -73,50 +76,60 @@ const defaultState: AppState = {
 function App() {
   const [state, setState] = usePersistedState<AppState>(defaultState);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const tab = useHashTab();
 
   const result = useMemo(() => compareCltVsPj(state.clt, state.pj), [state.clt, state.pj]);
 
   return (
     <div className="app-shell">
+      <Tabs current={tab} />
       <Header />
 
-      <main className="input-grid">
-        <CltInputs value={state.clt} onChange={(clt) => setState({ ...state, clt })} />
-        <PjInputs value={state.pj} onChange={(pj) => setState({ ...state, pj })} />
-      </main>
+      {tab === "contadores" ? (
+        <AccountantsPage />
+      ) : (
+        <>
+          <main className="input-grid">
+            <CltInputs value={state.clt} onChange={(clt) => setState({ ...state, clt })} />
+            <PjInputs value={state.pj} onChange={(pj) => setState({ ...state, pj })} />
+          </main>
 
-      <div ref={resultsRef} className="app-shell-results">
-        <BreakevenCallout result={result} />
-        <ReportButton result={result} clt={state.clt} pj={state.pj} />
-        <ComparisonSummary result={result} />
-        <PayslipCard result={result} />
-        <ContractTotalsCard result={result} />
-        <ContractCalendarCard result={result} />
-        <PjDrivers result={result} />
-        <CostAnalysisPanel result={result} />
-        <ComparisonTable result={result} />
-      </div>
+          <div ref={resultsRef} className="app-shell-results">
+            <BreakevenCallout result={result} />
+            <ReportButton result={result} clt={state.clt} pj={state.pj} />
+            <ComparisonSummary result={result} />
+            <PayslipCard result={result} />
+            <ContractTotalsCard result={result} />
+            <ContractCalendarCard result={result} />
+            <PjDrivers result={result} />
+            <CostAnalysisPanel result={result} />
+            <ComparisonTable result={result} />
+          </div>
+        </>
+      )}
 
       <Donate />
 
       <Footer />
 
-      <div className="sticky-bar">
-        <div>
-          <p className="label">PJ precisa faturar</p>
-          <p className="value">
-            {result.minimumGross === null
-              ? "Fora do alcance"
-              : `${formatCurrency(result.minimumGross)}/mês`}
-          </p>
+      {tab === "calculadora" && (
+        <div className="sticky-bar">
+          <div>
+            <p className="label">PJ precisa faturar</p>
+            <p className="value">
+              {result.minimumGross === null
+                ? "Fora do alcance"
+                : `${formatCurrency(result.minimumGross)}/mês`}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            Ver detalhes
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        >
-          Ver detalhes
-        </button>
-      </div>
+      )}
     </div>
   );
 }

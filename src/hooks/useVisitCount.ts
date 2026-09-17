@@ -12,13 +12,25 @@ const SESSION_FLAG = "clt_vs_pj_visita_contada";
 // antes do /hit e mostrar um número defasado.
 let request: Promise<number | null> | null = null;
 
+/**
+ * Só conta visita de gente no site publicado. Servidor local e navegador
+ * automatizado (testes, robôs que se declaram) apenas leem o total — senão
+ * cada teste de desenvolvimento virava uma "visita" no contador real.
+ */
+export function shouldCountVisit(hostname: string, isAutomated: boolean): boolean {
+  if (isAutomated) return false;
+  return !["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"].includes(hostname);
+}
+
 function fetchVisitCount(): Promise<number | null> {
   if (request) return request;
 
-  let alreadyCounted = false;
+  let alreadyCounted = !shouldCountVisit(window.location.hostname, navigator.webdriver === true);
   try {
-    alreadyCounted = sessionStorage.getItem(SESSION_FLAG) === "1";
-    if (!alreadyCounted) sessionStorage.setItem(SESSION_FLAG, "1");
+    if (!alreadyCounted) {
+      alreadyCounted = sessionStorage.getItem(SESSION_FLAG) === "1";
+      if (!alreadyCounted) sessionStorage.setItem(SESSION_FLAG, "1");
+    }
   } catch {
     // sessionStorage bloqueado: só lê o total, sem contar de novo.
     alreadyCounted = true;
