@@ -206,6 +206,7 @@ export function calculateClt(input: CltInput): CltResult {
     grossSalary,
     dependents,
     payslip,
+    monthlyInPocket: payslip.net + externalIncome,
     thirteenthNet,
     vacationBonusNet,
     allowance,

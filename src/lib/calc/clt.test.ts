@@ -221,6 +221,21 @@ describe("do holerite à média do ano", () => {
     { grossSalary: 12000, allowance: 200, healthPlanEmployeeShare: 450, transportVoucher: 900, externalIncome: 800, dependents: 2 },
   ];
 
+  it("líquido do mês com o extra = holerite + recebido por fora", () => {
+    for (const c of cenarios) {
+      const r = calculateClt({ ...sheetClt, ...c });
+      expect(r.monthlyInPocket).toBeCloseTo(r.payslip.net + c.externalIncome, 6);
+    }
+  });
+
+  it("recebido por fora não altera o holerite, mas sobe o líquido do mês e a média", () => {
+    const sem = calculateClt({ ...sheetClt, ...cenarios[0] });
+    const com = calculateClt({ ...sheetClt, ...cenarios[0], externalIncome: 500 });
+    expect(com.payslip.net).toBeCloseTo(sem.payslip.net, 6);
+    expect(com.monthlyInPocket).toBeCloseTo(sem.monthlyInPocket + 500, 6);
+    expect(com.netEffective).toBeCloseTo(sem.netEffective + 500, 6);
+  });
+
   it("média = holerite + (13º líquido + 1/3 de férias líquido) ÷ 12 + recebido por fora", () => {
     for (const c of cenarios) {
       const r = calculateClt({ ...sheetClt, ...c });

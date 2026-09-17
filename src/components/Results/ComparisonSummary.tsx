@@ -7,6 +7,8 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
   const worseOff = proposalDelta < 0;
 
   const cltPayslip = useAnimatedNumber(clt.payslip.net);
+  const cltInPocket = useAnimatedNumber(clt.monthlyInPocket);
+  const hasExtra = clt.externalIncome > 0;
   const pjNet = useAnimatedNumber(proposed.netEffective);
   const delta = useAnimatedNumber(proposalDelta);
 
@@ -20,11 +22,27 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
         <article className="tile">
           <p className="tile-label">
             <span className="dot clt" />
-            CLT · líquido no holerite
+            CLT · líquido por mês
           </p>
-          <p className="tile-value">{formatCurrency(cltPayslip)}</p>
+          {hasExtra ? (
+            <div className="tile-split">
+              <div>
+                <p className="tile-split-label">No holerite</p>
+                <p className="tile-split-value">{formatCurrency(cltPayslip)}</p>
+              </div>
+              <div>
+                <p className="tile-split-label">Com o extra por fora</p>
+                <p className="tile-split-value strong">{formatCurrency(cltInPocket)}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="tile-value">{formatCurrency(cltPayslip)}</p>
+          )}
           <p className="tile-meta">
-            com 13º e 1/3 de férias: {formatCurrency(clt.netEffective)}/mês na média do ano
+            {hasExtra
+              ? `inclui ${formatCurrency(clt.externalIncome)} por fora, sem imposto. `
+              : "no holerite. "}
+            Com 13º e 1/3 de férias: {formatCurrency(clt.netEffective)}/mês na média do ano
           </p>
         </article>
 

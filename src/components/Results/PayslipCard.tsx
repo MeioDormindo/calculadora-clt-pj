@@ -5,7 +5,8 @@ const pct = (part: number, whole: number) =>
   whole > 0 ? `${((part / whole) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "";
 
 export function PayslipCard({ result }: { result: ComparisonResult }) {
-  const { payslip, netEffective, thirteenthNet, vacationBonusNet, externalIncome } = result.clt;
+  const { payslip, netEffective, thirteenthNet, vacationBonusNet, externalIncome, monthlyInPocket } =
+    result.clt;
 
   const rows = [
     { label: "Salário", reference: "30/30", earning: payslip.salary, discount: 0 },
@@ -58,6 +59,20 @@ export function PayslipCard({ result }: { result: ComparisonResult }) {
               <td />
               <td colSpan={2}>{formatCurrency(payslip.net)}</td>
             </tr>
+            {externalIncome > 0 && (
+              <>
+                <tr className="payslip-extra">
+                  <th scope="row">+ Recebido por fora (não tributável)</th>
+                  <td />
+                  <td colSpan={2}>{formatCurrency(externalIncome)}</td>
+                </tr>
+                <tr className="payslip-extra total">
+                  <th scope="row">= Líquido com o extra</th>
+                  <td />
+                  <td colSpan={2}>{formatCurrency(monthlyInPocket)}</td>
+                </tr>
+              </>
+            )}
           </tfoot>
         </table>
       </div>
@@ -69,6 +84,12 @@ export function PayslipCard({ result }: { result: ComparisonResult }) {
             <dt>Líquido no holerite</dt>
             <dd>{formatCurrency(payslip.net)}</dd>
           </div>
+          {externalIncome > 0 && (
+            <div>
+              <dt>+ recebido por fora</dt>
+              <dd>{formatCurrency(externalIncome)}</dd>
+            </div>
+          )}
           <div>
             <dt>+ 13º líquido ({formatCurrency(thirteenthNet)} ÷ 12)</dt>
             <dd>{formatCurrency(thirteenthNet / 12)}</dd>
@@ -77,12 +98,6 @@ export function PayslipCard({ result }: { result: ComparisonResult }) {
             <dt>+ 1/3 de férias líquido ({formatCurrency(vacationBonusNet)} ÷ 12)</dt>
             <dd>{formatCurrency(vacationBonusNet / 12)}</dd>
           </div>
-          {externalIncome > 0 && (
-            <div>
-              <dt>+ recebido por fora</dt>
-              <dd>{formatCurrency(externalIncome)}</dd>
-            </div>
-          )}
           <div className="total">
             <dt>= Média mensal usada na comparação</dt>
             <dd>{formatCurrency(netEffective)}</dd>

@@ -116,6 +116,8 @@ export interface CltResult {
   grossSalary: number;
   dependents: number;
   payslip: Payslip;
+  /** O que chega por mês num mês comum: líquido do holerite + recebido por fora. */
+  monthlyInPocket: number;
   /** 13º líquido no ano (depois do INSS e do IRRF dele). */
   thirteenthNet: number;
   /** 1/3 de férias líquido no ano: o 1/3 menos o INSS e o IRRF a mais do mês de férias. */
