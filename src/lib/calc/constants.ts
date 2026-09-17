@@ -81,6 +81,15 @@ export const SIMPLES_ANEXO_I: SimplesBracket[] = [
   { upTo: 4800000, rate: 0.19, deduction: 378000 },
 ];
 
+export const SIMPLES_ANEXO_II: SimplesBracket[] = [
+  { upTo: 180000, rate: 0.045, deduction: 0 },
+  { upTo: 360000, rate: 0.078, deduction: 5940 },
+  { upTo: 720000, rate: 0.1, deduction: 13860 },
+  { upTo: 1800000, rate: 0.112, deduction: 22500 },
+  { upTo: 3600000, rate: 0.147, deduction: 85500 },
+  { upTo: 4800000, rate: 0.3, deduction: 720000 },
+];
+
 export const SIMPLES_ANEXO_III: SimplesBracket[] = [
   { upTo: 180000, rate: 0.06, deduction: 0 },
   { upTo: 360000, rate: 0.112, deduction: 9360 },
@@ -88,6 +97,16 @@ export const SIMPLES_ANEXO_III: SimplesBracket[] = [
   { upTo: 1800000, rate: 0.16, deduction: 35640 },
   { upTo: 3600000, rate: 0.21, deduction: 125640 },
   { upTo: 4800000, rate: 0.33, deduction: 648000 },
+];
+
+// No Anexo IV o INSS patronal (CPP) não está no DAS: é pago à parte.
+export const SIMPLES_ANEXO_IV: SimplesBracket[] = [
+  { upTo: 180000, rate: 0.045, deduction: 0 },
+  { upTo: 360000, rate: 0.09, deduction: 8100 },
+  { upTo: 720000, rate: 0.102, deduction: 12420 },
+  { upTo: 1800000, rate: 0.14, deduction: 39780 },
+  { upTo: 3600000, rate: 0.22, deduction: 183780 },
+  { upTo: 4800000, rate: 0.33, deduction: 828000 },
 ];
 
 export const SIMPLES_ANEXO_V: SimplesBracket[] = [
@@ -109,7 +128,9 @@ export interface PjTaxPreset {
 export const PJ_TAX_PRESETS: PjTaxPreset[] = [
   { id: "MEI", label: "MEI (DAS fixo — serviços)", fixedMonthly: 86.05 },
   { id: "SIMPLES_I", label: "Simples Nacional — Anexo I (a partir de 4%)", brackets: SIMPLES_ANEXO_I },
+  { id: "SIMPLES_II", label: "Simples Nacional — Anexo II (a partir de 4,5%)", brackets: SIMPLES_ANEXO_II },
   { id: "SIMPLES_III", label: "Simples Nacional — Anexo III (a partir de 6%)", brackets: SIMPLES_ANEXO_III },
+  { id: "SIMPLES_IV", label: "Simples Nacional — Anexo IV (a partir de 4,5%)", brackets: SIMPLES_ANEXO_IV },
   { id: "SIMPLES_V", label: "Simples Nacional — Anexo V (a partir de 15,5%)", brackets: SIMPLES_ANEXO_V },
   { id: "CARNE_LEAO", label: "Autônomo sem CNPJ — carnê-leão (tabela do IR)" },
   { id: "MANUAL", label: "Taxa manual" },
@@ -136,6 +157,11 @@ export const PJ_INSS_PRESETS: PjInssPreset[] = [
     id: "FATOR_R",
     label: "Simples Nacional (Fator R)",
     description: "Pró-labore de 28% do faturamento, com INSS de 11% sobre ele — o que garante o Anexo III",
+  },
+  {
+    id: "ANEXO_IV",
+    label: "Simples Nacional Anexo IV (pró-labore + CPP)",
+    description: "Pró-labore de 1 salário mínimo: 11% seu e 20% de INSS patronal, pago fora do DAS",
   },
   {
     id: "AUTONOMO",
@@ -171,73 +197,163 @@ export interface PjActivity {
 // então acima de R$ 15 mil/mês a alíquota efetiva sobe sozinha.
 export const PJ_ACTIVITIES: PjActivity[] = [
   {
+    id: "PJ_EMPRESA",
+    label: "PJ em uma empresa",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Prestação de serviço intelectual: Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
     id: "TI",
     label: "Serviços de TI",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele.",
-  },
-  {
-    id: "PJ_EMPRESA",
-    label: "PJ em uma empresa (consultoria)",
-    taxRegime: "SIMPLES_III",
-    inssMode: "FATOR_R",
-    description: "Consultoria e serviço intelectual: Anexo III (a partir de 6%) via Fator R.",
+    description:
+      "Desenvolvimento e suporte: Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
   },
   {
     id: "ADMIN",
     label: "Serviços administrativos",
     taxRegime: "SIMPLES_III",
     inssMode: "FATOR_R",
-    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
-  },
-  {
-    id: "MEDICINA",
-    label: "Medicina",
-    taxRegime: "SIMPLES_III",
-    inssMode: "FATOR_R",
-    description: "Anexo III (a partir de 6%) via Fator R. Sem pró-labore de 28%, cairia no Anexo V (a partir de 15,5%).",
-  },
-  {
-    id: "SAUDE",
-    label: "Psicologia e outros da saúde",
-    taxRegime: "SIMPLES_III",
-    inssMode: "FATOR_R",
-    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
-  },
-  {
-    id: "ENGENHARIA",
-    label: "Engenharia e arquitetura",
-    taxRegime: "SIMPLES_III",
-    inssMode: "FATOR_R",
-    description: "Anexo III (a partir de 6%) via Fator R, com pró-labore de 28% do faturamento.",
-  },
-  {
-    id: "MARKETING",
-    label: "Marketing e publicidade",
-    taxRegime: "SIMPLES_III",
-    inssMode: "SIMPLES_PROLABORE",
-    description: "Anexo III (a partir de 6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
+    description:
+      "Gestão e administração: Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
   },
   {
     id: "COMERCIO",
     label: "Comércio",
     taxRegime: "SIMPLES_I",
     inssMode: "SIMPLES_PROLABORE",
-    description: "Anexo I (a partir de 4%). Pró-labore de 1 salário mínimo.",
+    description:
+      "Anexo I (a partir de 4%). Pró-labore de 1 salário mínimo.",
+  },
+  {
+    id: "INDUSTRIA",
+    label: "Indústria",
+    taxRegime: "SIMPLES_II",
+    inssMode: "SIMPLES_PROLABORE",
+    description:
+      "Anexo II (a partir de 4,5%). Pró-labore de 1 salário mínimo.",
+  },
+  {
+    id: "MEDICINA",
+    label: "Medicina",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "ODONTOLOGIA",
+    label: "Odontologia",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "SAUDE",
+    label: "Psicologia, fisioterapia e outros da saúde",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "VETERINARIA",
+    label: "Medicina veterinária",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "MARKETING",
+    label: "Marketing e publicidade",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "ARQUITETURA",
+    label: "Arquitetura",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "ENGENHARIA",
+    label: "Engenharia",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "EDUCACAO",
+    label: "Educação e cursos livres",
+    taxRegime: "SIMPLES_III",
+    inssMode: "SIMPLES_PROLABORE",
+    description:
+      "Anexo III (a partir de 6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
+  },
+  {
+    id: "ADVOCACIA",
+    label: "Advocacia",
+    taxRegime: "SIMPLES_IV",
+    inssMode: "ANEXO_IV",
+    description:
+      "Anexo IV (a partir de 4,5%). O INSS patronal de 20% sobre o pró-labore é pago fora do DAS.",
+  },
+  {
+    id: "CONSULTORIA",
+    label: "Consultoria",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "REPRESENTACAO",
+    label: "Representação comercial",
+    taxRegime: "SIMPLES_III",
+    inssMode: "FATOR_R",
+    description:
+      "Anexo III (a partir de 6%) via Fator R: pró-labore de 28% do faturamento, com INSS de 11% sobre ele. Sem isso, cairia no Anexo V (a partir de 15,5%).",
+  },
+  {
+    id: "CONTABILIDADE",
+    label: "Contabilidade",
+    taxRegime: "SIMPLES_III",
+    inssMode: "SIMPLES_PROLABORE",
+    description:
+      "Anexo III (a partir de 6%) direto. Em muitas cidades o ISS é fixo e pago à parte.",
+  },
+  {
+    id: "CORRETAGEM",
+    label: "Corretagem de imóveis",
+    taxRegime: "SIMPLES_III",
+    inssMode: "SIMPLES_PROLABORE",
+    description:
+      "Anexo III (a partir de 6%) direto, sem Fator R. Pró-labore de 1 salário mínimo.",
   },
   {
     id: "MEI",
     label: "MEI (atividades permitidas)",
     taxRegime: "MEI",
     inssMode: "MEI",
-    description: "DAS fixo com INSS incluso. Teto de R$ 81 mil/ano, e nem toda profissão pode ser MEI.",
+    description:
+      "DAS fixo com INSS incluso. Teto de R$ 81 mil/ano, e nem toda profissão pode ser MEI.",
   },
   {
     id: "CUSTOM",
     label: "Outra / escolher manualmente",
     taxRegime: "SIMPLES_V",
     inssMode: "SIMPLES_PROLABORE",
-    description: "Você escolhe o regime tributário e a contribuição ao INSS.",
+    description:
+      "Você escolhe o regime tributário e a contribuição ao INSS.",
   },
 ];

@@ -15,7 +15,9 @@ export interface IrrfBracket {
 export type PjTaxRegimeId =
   | "MEI"
   | "SIMPLES_I"
+  | "SIMPLES_II"
   | "SIMPLES_III"
+  | "SIMPLES_IV"
   | "SIMPLES_V"
   | "CARNE_LEAO"
   | "MANUAL";
@@ -26,7 +28,13 @@ export interface SimplesBracket {
   deduction: number;
 }
 
-export type PjInssModeId = "MEI" | "SIMPLES_PROLABORE" | "FATOR_R" | "AUTONOMO" | "CUSTOM";
+export type PjInssModeId =
+  | "MEI"
+  | "SIMPLES_PROLABORE"
+  | "FATOR_R"
+  | "ANEXO_IV"
+  | "AUTONOMO"
+  | "CUSTOM";
 
 export interface CltInput {
   grossSalary: number;
@@ -46,6 +54,11 @@ export interface CltInput {
   healthPlan: number;
   otherBenefits: number;
   maternityAid: number;
+
+  /** Parte do plano de saúde descontada no seu holerite. */
+  healthPlanEmployeeShare: number;
+  /** Ajuda de custo não tributável (home office etc.), paga no holerite. */
+  allowance: number;
 
   /** Valor líquido recebido por fora da folha. Entra inteiro, sem impostos. */
   externalIncome: number;
@@ -85,9 +98,28 @@ export interface Line {
   value: number;
 }
 
+/** O que aparece num holerite de mês comum, sem 13º nem férias. */
+export interface Payslip {
+  salary: number;
+  allowance: number;
+  inss: number;
+  irrf: number;
+  healthPlanDiscount: number;
+  transportVoucherDiscount: number;
+  totalEarnings: number;
+  totalDiscounts: number;
+  net: number;
+  fgts: number;
+}
+
 export interface CltResult {
   grossSalary: number;
   dependents: number;
+  payslip: Payslip;
+  allowance: number;
+  /** Descontos seus no holerite (plano de saúde, vale-transporte). */
+  employeeShares: Line[];
+  totalEmployeeShares: number;
   vacationBonus: number;
   thirteenth: number;
   externalIncome: number;

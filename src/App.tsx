@@ -10,6 +10,7 @@ import { BreakevenCallout } from "./components/Results/BreakevenCallout";
 import { ComparisonTable } from "./components/Results/ComparisonTable";
 import { CostAnalysisPanel } from "./components/Results/CostAnalysisPanel";
 import { PjDrivers } from "./components/Results/PjDrivers";
+import { PayslipCard } from "./components/Results/PayslipCard";
 import { Header } from "./components/Layout/Header";
 import { Footer } from "./components/Layout/Footer";
 import { Donate } from "./components/Layout/Donate";
@@ -34,6 +35,8 @@ const defaultState: AppState = {
     healthPlan: 2800,
     otherBenefits: 0,
     maternityAid: 500,
+    healthPlanEmployeeShare: 0,
+    allowance: 0,
     externalIncome: 0,
     employerInss: null,
     rat: null,
@@ -77,6 +80,7 @@ function App() {
       <div ref={resultsRef} className="app-shell-results">
         <BreakevenCallout result={result} />
         <ComparisonSummary result={result} />
+        <PayslipCard result={result} />
         <PjDrivers result={result} />
         <CostAnalysisPanel result={result} />
         <ComparisonTable result={result} />

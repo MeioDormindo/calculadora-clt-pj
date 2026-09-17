@@ -51,7 +51,7 @@ export function calculatePjTax(
 /** Pró-labore que o sócio retira da empresa, quando o modo de INSS prevê um. */
 export function calculatePjProLabore(grossInvoice: number, inssMode: PjInput["inssMode"]): number {
   if (inssMode === "FATOR_R") return Math.max(grossInvoice * FATOR_R_MIN, MINIMUM_WAGE);
-  if (inssMode === "SIMPLES_PROLABORE") return MINIMUM_WAGE;
+  if (inssMode === "SIMPLES_PROLABORE" || inssMode === "ANEXO_IV") return MINIMUM_WAGE;
   return 0;
 }
 
@@ -67,6 +67,9 @@ export function calculatePjInss(
     case "SIMPLES_PROLABORE":
     case "FATOR_R":
       return Math.min(calculatePjProLabore(grossInvoice, inssMode), INSS_CEILING) * 0.11;
+    case "ANEXO_IV":
+      // 11% do sócio + 20% de CPP que, no Anexo IV, não vem dentro do DAS.
+      return Math.min(MINIMUM_WAGE, INSS_CEILING) * (0.11 + 0.2);
     case "AUTONOMO":
       return Math.min(grossInvoice, INSS_CEILING) * 0.2;
     case "CUSTOM":
@@ -146,7 +149,10 @@ export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult
     input.customInssBase,
   );
   const proLabore = calculatePjProLabore(grossInvoice, input.inssMode);
-  const proLaboreIrrf = proLabore > 0 ? calculateIrrf(proLabore, inss, clt.dependents) : 0;
+  // Só os 11% do sócio abatem o IR do pró-labore; a CPP é despesa da empresa.
+  const partnerInss = Math.min(proLabore, INSS_CEILING) * 0.11;
+  const proLaboreIrrf =
+    proLabore > 0 ? calculateIrrf(proLabore, partnerInss, clt.dependents) : 0;
   const tax = calculatePjTax(
     grossInvoice,
     input.taxRegime,
@@ -156,7 +162,12 @@ export function calculatePj(grossInvoice: number, input: PjInput, clt: CltResult
   );
 
   const costs: Line[] = [
-    ...clt.benefits.map((line) => ({ ...line })),
+    // Como PJ você paga o custo inteiro: a parte que a empresa bancava e a
+    // parte que já saía do seu holerite.
+    ...clt.benefits.map((line) => ({
+      ...line,
+      value: line.value + (clt.employeeShares.find((s) => s.key === line.key)?.value ?? 0),
+    })),
     { key: "lifeInsurance", label: "Seguro de vida", value: input.lifeInsurance },
     { key: "accountantFee", label: "Serviços de contabilidade", value: input.accountantFee },
     { key: "inss", label: "INSS", value: inss },

@@ -4,6 +4,7 @@ import type {
   CltInput,
   CltResult,
   Line,
+  Payslip,
   Auto,
 } from "./types";
 import {
@@ -141,7 +142,7 @@ export function calculateClt(input: CltInput): CltResult {
     { key: "priorNotice", label: "Aviso prévio (provisão)", value: resolve(input.priorNotice, auto.priorNotice) },
     {
       key: "transportVoucher",
-      label: "Vale-transporte (parte da empresa)",
+      label: "Vale-transporte",
       value: companyTransportVoucher(input.transportVoucher, grossSalary),
     },
     { key: "mealVoucher", label: "Vale-refeição", value: input.mealVoucher },
@@ -159,13 +160,49 @@ export function calculateClt(input: CltInput): CltResult {
   ];
   const totalEmployerCharges = employerCharges.reduce((sum, line) => sum + line.value, 0);
 
+  // O que sai do seu bolso mesmo sendo CLT. As chaves são as mesmas dos
+  // benefícios: como PJ você passa a pagar o custo inteiro (sua parte + a da
+  // empresa), então o valor mínimo não muda — só o líquido fica honesto.
+  const transportVoucherDiscount = Math.min(
+    input.transportVoucher,
+    grossSalary * TRANSPORT_VOUCHER_EMPLOYEE_SHARE,
+  );
+  const employeeShares: Line[] = [
+    { key: "healthPlan", label: "Plano de saúde (sua parte)", value: input.healthPlanEmployeeShare },
+    { key: "transportVoucher", label: "Vale-transporte (sua parte)", value: transportVoucherDiscount },
+  ];
+  const totalEmployeeShares = employeeShares.reduce((sum, line) => sum + line.value, 0);
+
+  // Ajuda de custo é indenizatória: não paga INSS, IRRF nem FGTS, e não entra
+  // no 13º nem nas férias.
+  const allowance = input.allowance;
+
   // Valor pago por fora da folha: chega líquido, sem INSS nem IRRF, mas a
   // empresa desembolsa do mesmo jeito — entra nos dois lados da conta.
   const externalIncome = input.externalIncome;
 
+  const payslipDiscounts =
+    inssRegular + irrfRegular + input.healthPlanEmployeeShare + transportVoucherDiscount;
+  const payslip: Payslip = {
+    salary: grossSalary,
+    allowance,
+    inss: inssRegular,
+    irrf: irrfRegular,
+    healthPlanDiscount: input.healthPlanEmployeeShare,
+    transportVoucherDiscount,
+    totalEarnings: grossSalary + allowance,
+    totalDiscounts: payslipDiscounts,
+    net: grossSalary + allowance - payslipDiscounts,
+    fgts: grossSalary * FGTS_RATE,
+  };
+
   return {
     grossSalary,
     dependents,
+    payslip,
+    allowance,
+    employeeShares,
+    totalEmployeeShares,
     vacationBonus,
     thirteenth,
     externalIncome,
@@ -177,7 +214,8 @@ export function calculateClt(input: CltInput): CltResult {
     totalBenefits,
     employerCharges,
     totalEmployerCharges,
-    netEffective: directPay - totalCosts + externalIncome,
-    employerCost: directPay + externalIncome + totalBenefits + totalEmployerCharges,
+    netEffective: directPay - totalCosts + externalIncome + allowance - totalEmployeeShares,
+    employerCost:
+      directPay + externalIncome + allowance + totalBenefits + totalEmployerCharges,
   };
 }

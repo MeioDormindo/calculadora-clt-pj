@@ -123,9 +123,11 @@ describe("CLT completo (salário R$ 10.000)", () => {
     expect(clt.irrf).toBeGreaterThan(calculateIrrf(10000, calculateInss(10000), 0));
   });
 
-  it("líquida efetiva desconta os impostos médios", () => {
-    expect(clt.netEffective).toBeCloseTo(clt.directPay - clt.inss - clt.irrf, 6);
-    expect(clt.netEffective).toBeCloseTo(8263.95, 1);
+  it("líquida efetiva desconta impostos médios e a sua parte do VT", () => {
+    // VT de 600 com salário de 10.000: os 6% (600) saem inteiros do seu holerite.
+    expect(clt.totalEmployeeShares).toBeCloseTo(600, 2);
+    expect(clt.netEffective).toBeCloseTo(clt.directPay - clt.inss - clt.irrf - 600, 6);
+    expect(clt.netEffective).toBeCloseTo(8263.95 - 600, 1);
   });
 
   it("benefícios: FGTS sobre a folha e VT zerado pela regra dos 6%", () => {
@@ -150,5 +152,64 @@ describe("CLT completo (salário R$ 10.000)", () => {
     const sobrescrito = calculateClt({ ...sheetClt, rat: 100, profitSharing: 0 });
     expect(sobrescrito.totalEmployerCharges).toBeCloseTo(2222.22 + 100 + 644.44, 1);
     expect(sobrescrito.totalBenefits).toBeCloseTo(6394.44 - 833.33, 1);
+  });
+});
+
+describe("holerite do mês", () => {
+  // Valores de um holerite real (agosto/2026), usados só como números.
+  const holerite = calculateClt({
+    ...sheetClt,
+    grossSalary: 3980.02,
+    transportVoucher: 0,
+    healthPlanEmployeeShare: 341.55,
+    allowance: 100,
+  }).payslip;
+
+  it("INSS bate com o holerite (diferença de centavo é arredondamento da folha)", () => {
+    // Holerite: 366,19. Faixa a faixa exato: 366,2022.
+    expect(holerite.inss).toBeCloseTo(366.19, 1);
+  });
+
+  it("IRRF zerado abaixo de R$ 5.000, como no holerite", () => {
+    expect(holerite.irrf).toBeCloseTo(0, 6);
+  });
+
+  it("FGTS do mês bate com o holerite", () => {
+    expect(holerite.fgts).toBeCloseTo(318.4, 2);
+  });
+
+  it("vencimentos, descontos e líquido batem com o holerite", () => {
+    expect(holerite.totalEarnings).toBeCloseTo(4080.02, 2);
+    expect(holerite.totalDiscounts).toBeCloseTo(707.74, 1);
+    expect(holerite.net).toBeCloseTo(3372.28, 1);
+  });
+
+  it("desconta o VT até 6% do salário", () => {
+    const comVt = calculateClt({ ...sheetClt, grossSalary: 3000, transportVoucher: 400 }).payslip;
+    expect(comVt.transportVoucherDiscount).toBeCloseTo(180, 2);
+    const vtBarato = calculateClt({ ...sheetClt, grossSalary: 3000, transportVoucher: 100 }).payslip;
+    expect(vtBarato.transportVoucherDiscount).toBeCloseTo(100, 2);
+  });
+});
+
+describe("ajuda de custo e sua parte do plano", () => {
+  const base = calculateClt(sheetClt);
+
+  it("ajuda de custo entra no líquido e no custo da empresa, sem imposto", () => {
+    const comAjuda = calculateClt({ ...sheetClt, allowance: 100 });
+    expect(comAjuda.inss).toBeCloseTo(base.inss, 6);
+    expect(comAjuda.irrf).toBeCloseTo(base.irrf, 6);
+    expect(comAjuda.netEffective).toBeCloseTo(base.netEffective + 100, 6);
+    expect(comAjuda.employerCost).toBeCloseTo(base.employerCost + 100, 6);
+    expect(comAjuda.benefits.find((b) => b.key === "fgts")?.value).toBeCloseTo(
+      base.benefits.find((b) => b.key === "fgts")!.value,
+      6,
+    );
+  });
+
+  it("sua parte do plano sai do líquido, mas não é custo da empresa", () => {
+    const comCoparticipacao = calculateClt({ ...sheetClt, healthPlanEmployeeShare: 300 });
+    expect(comCoparticipacao.netEffective).toBeCloseTo(base.netEffective - 300, 6);
+    expect(comCoparticipacao.employerCost).toBeCloseTo(base.employerCost, 6);
   });
 });

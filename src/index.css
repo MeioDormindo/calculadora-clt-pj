@@ -828,6 +828,17 @@ code {
   background: color-mix(in oklab, var(--critical) 13%, transparent);
 }
 
+.payslip-fgts {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.comparison-table td.reference {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
 /* ---------- drivers do PJ ---------- */
 
 .drivers {

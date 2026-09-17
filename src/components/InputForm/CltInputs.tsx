@@ -39,6 +39,14 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
       />
 
       <Field
+        label="Ajuda de custo (não tributável)"
+        prefix="R$"
+        value={value.allowance}
+        onChange={(v) => setField("allowance", v)}
+        hint="Home office, auxílios indenizatórios. Vem no holerite, mas sem INSS, IRRF nem FGTS."
+      />
+
+      <Field
         label="Recebido por fora (líquido)"
         prefix="R$"
         value={value.externalIncome}
@@ -65,12 +73,22 @@ export function CltInputs({ value, onChange }: CltInputsProps) {
               hint="Já sem a parte descontada de você, se houver."
             />
           </div>
-          <Field
-            label="Plano de saúde"
-            prefix="R$"
-            value={value.healthPlan}
-            onChange={(v) => setField("healthPlan", v)}
-          />
+          <div className="field-row">
+            <Field
+              label="Plano de saúde (empresa paga)"
+              prefix="R$"
+              value={value.healthPlan}
+              onChange={(v) => setField("healthPlan", v)}
+              hint="Parte da empresa. Pergunte ao RH se não souber."
+            />
+            <Field
+              label="Plano de saúde (seu desconto)"
+              prefix="R$"
+              value={value.healthPlanEmployeeShare}
+              onChange={(v) => setField("healthPlanEmployeeShare", v)}
+              hint="O que aparece descontado no holerite."
+            />
+          </div>
           <AutoField
             label="Participação nos lucros"
             value={value.profitSharing}

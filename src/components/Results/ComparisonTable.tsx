@@ -35,6 +35,9 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
     },
     { label: "Adicional de férias", clt: clt.vacationBonus, min: null, prop: null },
     { label: "Décimo terceiro salário", clt: clt.thirteenth, min: null, prop: null },
+    ...(clt.allowance > 0
+      ? [{ label: "Ajuda de custo (não tributável)", clt: clt.allowance, min: null, prop: null }]
+      : []),
     ...(clt.externalIncome > 0
       ? [{ label: "Recebido por fora (líquido)", clt: clt.externalIncome, min: null, prop: null }]
       : []),
@@ -44,6 +47,9 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       min: cost(minimum, benefit.key),
       prop: cost(proposed, benefit.key),
     })),
+    ...clt.employeeShares
+      .filter((share) => share.value > 0)
+      .map((share) => ({ label: share.label, clt: -share.value, min: null, prop: null })),
     {
       label: "Seguro de vida",
       clt: null,

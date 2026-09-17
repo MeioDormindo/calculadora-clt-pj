@@ -95,12 +95,15 @@ describe("impostos e contribuições do PJ", () => {
 describe("lado PJ", () => {
   const clt = calculateClt(sheetClt);
 
-  it("assume como custo todos os benefícios que a empresa bancava", () => {
+  it("assume o custo inteiro de cada benefício: parte da empresa + a sua", () => {
     const pj = calculatePj(15000, sheetPj, clt);
     for (const benefit of clt.benefits) {
+      const share = clt.employeeShares.find((s) => s.key === benefit.key)?.value ?? 0;
       const mirrored = pj.costs.find((c) => c.key === benefit.key);
-      expect(mirrored?.value).toBeCloseTo(benefit.value, 6);
+      expect(mirrored?.value).toBeCloseTo(benefit.value + share, 6);
     }
+    // VT: a empresa pagava 0, você pagava 600 — como PJ, 600.
+    expect(pj.costs.find((c) => c.key === "transportVoucher")?.value).toBeCloseTo(600, 2);
   });
 
   it("líquida efetiva = faturamento menos todos os custos", () => {
@@ -222,5 +225,31 @@ describe("IR do PJ", () => {
     const inss = calculatePjInss(10000, "AUTONOMO", 0, 0);
     // 10.000 - 1.695,11 = 8.304,89 -> x 27,5% - 908,73.
     expect(calculatePjTax(10000, "CARNE_LEAO", 0, inss, 0)).toBeCloseTo(1375.11, 1);
+  });
+});
+
+describe("Anexos II e IV", () => {
+  it("Anexo II (indústria) começa em 4,5%", () => {
+    expect(calculatePjTax(10000, "SIMPLES_II", 0)).toBeCloseTo(450, 2);
+  });
+
+  it("Anexo IV (advocacia) começa em 4,5% e tem faixas próprias", () => {
+    expect(calculatePjTax(10000, "SIMPLES_IV", 0)).toBeCloseTo(450, 2);
+    // RBT12 de 300 mil: (300.000 x 9% - 8.100) / 12.
+    expect(calculatePjTax(25000, "SIMPLES_IV", 0)).toBeCloseTo((300000 * 0.09 - 8100) / 12, 2);
+  });
+
+  it("no Anexo IV o INSS inclui os 20% de CPP fora do DAS", () => {
+    expect(calculatePjInss(10000, "ANEXO_IV", 0, 0)).toBeCloseTo(1621 * 0.31, 2);
+  });
+
+  it("advocacia aplica Anexo IV com a contribuição própria", () => {
+    const r = applyActivity({ ...sheetPj, activity: "ADVOCACIA" });
+    expect(r.taxRegime).toBe("SIMPLES_IV");
+    expect(r.inssMode).toBe("ANEXO_IV");
+  });
+
+  it("marketing e publicidade estão sujeitos ao Fator R", () => {
+    expect(applyActivity({ ...sheetPj, activity: "MARKETING" }).inssMode).toBe("FATOR_R");
   });
 });

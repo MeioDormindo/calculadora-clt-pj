@@ -95,3 +95,19 @@ describe("análise empresa vs empregado", () => {
     expect(result.proposalDelta).toBeLessThan(0);
   });
 });
+
+describe("descontos seus e ajuda de custo no valor mínimo", () => {
+  const cltBase = calculateClt(sheetClt);
+
+  it("sua parte do plano não muda o mínimo: como PJ você paga o plano inteiro", () => {
+    const semParte = findMinimumPjGross(cltBase, sheetPj);
+    const comParte = findMinimumPjGross(calculateClt({ ...sheetClt, healthPlanEmployeeShare: 400 }), sheetPj);
+    expect(comParte!).toBeCloseTo(semParte!, 1);
+  });
+
+  it("ajuda de custo sobe o mínimo, porque como PJ você a perde", () => {
+    const semAjuda = findMinimumPjGross(cltBase, sheetPj);
+    const comAjuda = findMinimumPjGross(calculateClt({ ...sheetClt, allowance: 300 }), sheetPj);
+    expect(comAjuda!).toBeGreaterThan(semAjuda!);
+  });
+});
