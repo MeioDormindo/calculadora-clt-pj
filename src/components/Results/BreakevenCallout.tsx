@@ -27,7 +27,11 @@ export function BreakevenCallout({ result }: { result: ComparisonResult }) {
         Para empatar com um CLT de {formatCurrency(clt.grossSalary)}, o PJ precisa faturar
       </p>
       <p className="hero-figure">{formatCurrency(animated)}</p>
-      <p className="hero-sub">por mês, com todos os benefícios e custos na conta</p>
+      <p className="hero-sub">
+        por mês, com todos os benefícios e custos na conta
+        {result.minimum?.billing.hourlyRate != null &&
+          ` — ${formatCurrency(result.minimum.billing.hourlyRate)} por hora`}
+      </p>
 
       <p className={`hero-verdict ${short ? "bad" : "good"}`}>
         {short

@@ -1,3 +1,5 @@
+import type { ContractCalendar } from "../calendar/workCalendar";
+
 /** Valor derivado do salário. `null` = calcular automaticamente pela fórmula. */
 export type Auto = number | null;
 
@@ -80,8 +82,17 @@ export interface PjInput {
   customInssBase: number;
   accountantFee: number;
   lifeInsurance: number;
-  workingDaysPerMonth: number;
-  holidaysPerYear: number;
+  /** "MONTHLY": valor fixo por mês. "HOURLY": o valor paga as horas mensais abaixo. */
+  billingMode: "MONTHLY" | "HOURLY";
+  monthlyHours: number;
+  hoursPerDay: number;
+  contractMonths: number;
+  /** Início do contrato, "AAAA-MM". null = sempre o mês atual. */
+  contractStart: string | null;
+  /** Conta Carnaval e Corpus Christi, além dos feriados nacionais. */
+  includeOptionalHolidays: boolean;
+  /** Feriados estaduais e municipais, que o calendário nacional não tem. */
+  localHolidaysPerYear: number;
   sickDaysPerYear: number;
   vacationDaysPerYear: number;
 
@@ -141,31 +152,48 @@ export interface CltResult {
   employerCost: number;
 }
 
-export interface LostDaysBreakdown {
+export interface BillingLine {
   key: string;
   label: string;
   days: number;
   paidDays: number;
   unpaidDays: number;
+  /** Média mensal no contrato. Negativo = ganho (ex.: mais horas no calendário). */
   monthlyCost: number;
 }
 
-export interface LostDaysCost {
-  dailyRate: number;
-  breakdown: LostDaysBreakdown[];
-  totalLostDays: number;
-  totalUnpaidDays: number;
-  annualCost: number;
-  monthlyEquivalent: number;
+export interface MonthBilling {
+  year: number;
+  month: number;
+  weekdays: number;
+  workdays: number;
+  holidays: number;
+  /** Horas faturadas no mês (só no modo por hora). */
+  hours: number | null;
+  /** Faturado no mês, antes de doença, férias e feriados locais. */
+  billed: number;
+}
+
+export interface PjBilling {
+  months: number;
+  hourlyRate: number | null;
+  /** Valor médio de um dia útil. */
+  dailyValue: number;
+  lines: BillingLine[];
+  /** Média do que é de fato faturado por mês no contrato. */
+  billedMonthly: number;
+  perMonth: MonthBilling[];
 }
 
 export interface PjResult {
+  /** Valor proposto (para as horas mensais, no modo por hora). */
   grossInvoice: number;
+  billedInvoice: number;
   costs: Line[];
   totalCosts: number;
   netEffective: number;
   employerCost: number;
-  lostDays: LostDaysCost;
+  billing: PjBilling;
   exceedsMeiLimit: boolean;
 }
 
@@ -181,6 +209,7 @@ export interface CostAnalysis {
 }
 
 export interface ComparisonResult {
+  calendar: ContractCalendar;
   clt: CltResult;
   minimum: PjResult | null;
   proposed: PjResult;

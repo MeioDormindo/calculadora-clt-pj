@@ -6,6 +6,12 @@ import {
   MEI_MONTHLY_LIMIT,
 } from "../../lib/calc/constants";
 import { applyActivity } from "../../lib/calc/pj";
+import {
+  buildContractCalendar,
+  currentYearMonth,
+  parseYearMonth,
+} from "../../lib/calendar/workCalendar";
+import { formatYearMonth } from "../../lib/calendar/format";
 import { formatCurrency } from "../../lib/format";
 import { Field, SelectField, ToggleField } from "../ui/Field";
 
@@ -36,11 +42,28 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
     );
   }
 
-  const lostDays = value.holidaysPerYear + value.sickDaysPerYear + value.vacationDaysPerYear;
-  const unpaidDays =
-    (value.paidHolidays ? 0 : value.holidaysPerYear) +
-    (value.paidSickDays ? 0 : value.sickDaysPerYear) +
-    Math.max(0, value.vacationDaysPerYear - value.paidVacationDays);
+  const start = parseYearMonth(value.contractStart);
+  const calendar = buildContractCalendar(start, value.contractMonths, value.includeOptionalHolidays);
+  const hourly = value.billingMode === "HOURLY";
+  const hourlyRate = hourly && value.monthlyHours > 0 ? value.proposedGross / value.monthlyHours : 0;
+
+  // Início: "este mês" (automático, acompanha a data de hoje) ou um dos
+  // próximos 24 meses. Um valor salvo fora dessa janela continua na lista.
+  const now = currentYearMonth();
+  const startOptions = [
+    { id: "AUTO", label: "Este mês (automático)" },
+    ...Array.from({ length: 24 }, (_, i) => {
+      const index = now.year * 12 + now.month - 1 + i;
+      const ym = { year: Math.floor(index / 12), month: (index % 12) + 1 };
+      return { id: `${ym.year}-${String(ym.month).padStart(2, "0")}`, label: formatYearMonth(ym) };
+    }),
+  ];
+  if (value.contractStart && !startOptions.some((o) => o.id === value.contractStart)) {
+    startOptions.splice(1, 0, { id: value.contractStart, label: formatYearMonth(start) });
+  }
+
+  const perYearDays =
+    value.localHolidaysPerYear + value.sickDaysPerYear + value.vacationDaysPerYear;
   const overMei = effective.taxRegime === "MEI" && value.proposedGross > MEI_MONTHLY_LIMIT;
 
   return (
@@ -52,11 +75,76 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
       <p className="card-subtitle">A proposta que fizeram e o que ela te custa.</p>
 
       <Field
-        label="Faturamento proposto (mensal)"
+        label="Valor proposto por mês"
         prefix="R$"
         value={value.proposedGross}
         onChange={(v) => setField("proposedGross", v)}
       />
+
+      <SelectField
+        label="Como esse valor é pago"
+        value={value.billingMode}
+        options={[
+          { id: "MONTHLY", label: "Valor fixo por mês" },
+          { id: "HOURLY", label: "Por hora trabalhada" },
+        ]}
+        onChange={(v) => setField("billingMode", v)}
+        hint={
+          hourly
+            ? "Você informa quantas horas por mês esse valor paga; o calendário real diz quantas horas cada mês tem de fato."
+            : "O valor do dia é o valor mensal dividido pelos dias úteis de cada mês do calendário."
+        }
+      />
+
+      {hourly && (
+        <>
+          <div className="field-row">
+            <Field
+              label="Horas mensais desse valor"
+              suffix="h"
+              min={1}
+              value={value.monthlyHours}
+              onChange={(v) => setField("monthlyHours", v)}
+            />
+            <Field
+              label="Horas por dia"
+              suffix="h"
+              min={1}
+              max={24}
+              value={value.hoursPerDay}
+              onChange={(v) => setField("hoursPerDay", v)}
+            />
+          </div>
+          <p className="group-note">
+            Valor da hora: <strong>{formatCurrency(hourlyRate)}</strong>
+          </p>
+        </>
+      )}
+
+      <details className="group" open>
+        <summary>
+          Contrato · {value.contractMonths} {value.contractMonths === 1 ? "mês" : "meses"} a partir de{" "}
+          {formatYearMonth(start)}
+        </summary>
+        <div className="group-body">
+          <div className="field-row">
+            <SelectField
+              label="Início"
+              value={value.contractStart ?? "AUTO"}
+              options={startOptions}
+              onChange={(v) => setField("contractStart", v === "AUTO" ? null : v)}
+            />
+            <Field
+              label="Duração"
+              suffix="meses"
+              min={1}
+              max={60}
+              value={value.contractMonths}
+              onChange={(v) => setField("contractMonths", v)}
+            />
+          </div>
+        </div>
+      </details>
 
       <SelectField
         label="Qual atividade você exerce ou vai exercer?"
@@ -137,18 +225,28 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
 
       <details className="group" open>
         <summary>
-          Dias parados · {unpaidDays} de {lostDays} dias/ano sem receber
+          Dias parados · {calendar.totalHolidays} feriados no calendário + {perYearDays} dias/ano
         </summary>
         <div className="group-body">
           <p className="group-note">
-            Marque o que o contrato PJ cobre. O que a empresa paga deixa de ser custo seu.
+            Os feriados nacionais vêm do calendário real do período do contrato:{" "}
+            <strong>
+              {calendar.totalHolidays} em dia útil nos {calendar.months.length} meses
+            </strong>
+            . Marque o que o contrato PJ cobre — o que a empresa paga deixa de ser custo seu.
           </p>
 
+          <ToggleField
+            label="Contar Carnaval e Corpus Christi"
+            checked={value.includeOptionalHolidays}
+            onChange={(v) => setField("includeOptionalHolidays", v)}
+          />
           <Field
-            label="Feriados"
-            suffix="dias"
-            value={value.holidaysPerYear}
-            onChange={(v) => setField("holidaysPerYear", v)}
+            label="Feriados estaduais e municipais"
+            suffix="dias/ano"
+            value={value.localHolidaysPerYear}
+            onChange={(v) => setField("localHolidaysPerYear", v)}
+            hint="O calendário só tem os nacionais. Some os da sua cidade e estado que caem em dia útil."
           />
           <ToggleField
             label="A empresa abona os feriados"
@@ -158,7 +256,7 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
 
           <Field
             label="Médico / doença"
-            suffix="dias"
+            suffix="dias/ano"
             value={value.sickDaysPerYear}
             onChange={(v) => setField("sickDaysPerYear", v)}
           />
@@ -170,8 +268,8 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
 
           <div className="field-row">
             <Field
-              label="Férias que você tira"
-              suffix="dias"
+              label="Férias (dias úteis)"
+              suffix="dias/ano"
               value={value.vacationDaysPerYear}
               onChange={(v) => setField("vacationDaysPerYear", v)}
             />
@@ -183,15 +281,6 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
               onChange={(v) => setField("paidVacationDays", v)}
             />
           </div>
-
-          <Field
-            label="Dias úteis no mês"
-            suffix="dias"
-            min={1}
-            value={value.workingDaysPerMonth}
-            onChange={(v) => setField("workingDaysPerMonth", v)}
-            hint="Base para converter os dias parados em dinheiro."
-          />
         </div>
       </details>
     </section>

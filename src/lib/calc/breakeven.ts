@@ -1,4 +1,5 @@
 import type { PjInput, CltResult } from "./types";
+import type { ContractCalendar } from "../calendar/workCalendar";
 import { calculatePj } from "./pj";
 
 /**
@@ -11,10 +12,11 @@ import { calculatePj } from "./pj";
 export function findMinimumPjGross(
   clt: CltResult,
   pjInput: PjInput,
+  calendar: ContractCalendar,
   bounds: { min: number; max: number } = { min: 0, max: 200000 },
   tolerance = 0.01,
 ): number | null {
-  const netAt = (grossInvoice: number) => calculatePj(grossInvoice, pjInput, clt).netEffective;
+  const netAt = (grossInvoice: number) => calculatePj(grossInvoice, pjInput, clt, calendar).netEffective;
   const target = clt.netEffective;
 
   if (netAt(bounds.max) < target) return null;

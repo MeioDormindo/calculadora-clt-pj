@@ -11,6 +11,8 @@ import { ComparisonTable } from "./components/Results/ComparisonTable";
 import { CostAnalysisPanel } from "./components/Results/CostAnalysisPanel";
 import { PjDrivers } from "./components/Results/PjDrivers";
 import { PayslipCard } from "./components/Results/PayslipCard";
+import { ContractTotalsCard } from "./components/Results/ContractTotalsCard";
+import { ContractCalendarCard } from "./components/Results/ContractCalendarCard";
 import { Header } from "./components/Layout/Header";
 import { Footer } from "./components/Layout/Footer";
 import { Donate } from "./components/Layout/Donate";
@@ -52,8 +54,13 @@ const defaultState: AppState = {
     customInssBase: 0,
     accountantFee: 600,
     lifeInsurance: 300,
-    workingDaysPerMonth: 22,
-    holidaysPerYear: 12,
+    billingMode: "MONTHLY",
+    monthlyHours: 160,
+    hoursPerDay: 8,
+    contractMonths: 12,
+    contractStart: null,
+    includeOptionalHolidays: true,
+    localHolidaysPerYear: 0,
     sickDaysPerYear: 5,
     vacationDaysPerYear: 20,
     paidHolidays: false,
@@ -81,6 +88,8 @@ function App() {
         <BreakevenCallout result={result} />
         <ComparisonSummary result={result} />
         <PayslipCard result={result} />
+        <ContractTotalsCard result={result} />
+        <ContractCalendarCard result={result} />
         <PjDrivers result={result} />
         <CostAnalysisPanel result={result} />
         <ComparisonTable result={result} />

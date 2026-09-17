@@ -80,7 +80,7 @@ export function ComparisonTable({ result }: ComparisonTableProps) {
       min: cost(minimum, "tax"),
       prop: cost(proposed, "tax"),
     },
-    ...proposed.lostDays.breakdown.map((item) => ({
+    ...proposed.billing.lines.map((item) => ({
       label: item.label,
       clt: null,
       min: cost(minimum, item.key),
