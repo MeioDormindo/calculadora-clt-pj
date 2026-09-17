@@ -1684,3 +1684,35 @@ code {
 .accountants-disclaimer {
   text-align: center;
 }
+
+/* ---------- empresa vs você ---------- */
+
+.analysis-summary {
+  margin: 4px 0 14px;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--ink-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comparison-table tr.delta-row th,
+.comparison-table tr.delta-row td {
+  font-size: 12.5px;
+  padding-top: 4px;
+}
+
+.comparison-table tr.delta-row th {
+  color: var(--ink-muted);
+  padding-left: 18px;
+}
+
+.delta-pct {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.analysis-note {
+  margin-top: 12px;
+}

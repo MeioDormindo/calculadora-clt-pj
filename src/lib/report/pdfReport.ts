@@ -4,6 +4,7 @@ import { PJ_ACTIVITIES, PJ_INSS_PRESETS, PJ_TAX_PRESETS } from "../calc/constant
 import { deriveCltDefaults } from "../calc/clt";
 import { applyActivity } from "../calc/pj";
 import { buildComparisonRows } from "../comparisonRows";
+import { describeScenario, formatDelta, formatPct } from "../costAnalysisText";
 import { MONTH_NAMES, formatHolidayDate, formatYearMonth } from "../calendar/format";
 
 const SITE_URL = "meiodormindo.github.io/calculadora-clt-pj";
@@ -246,23 +247,20 @@ export async function downloadPdfReport(
 
   // ---------- empresa vs você ----------
   heading(ctx, "Empresa vs você");
-  const analysisRows = (label: string, a: ComparisonResult["analysisProposed"]) => [
-    [`${label}: como CLT`, money(a.employerClt), money(a.workerClt)],
-    [`${label}: como PJ`, money(a.employerPj), money(a.workerPj)],
-    [
-      `${label}: variação`,
-      `${money(a.employerDelta)} (${a.employerDeltaPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`,
-      `${money(a.workerDelta)} (${a.workerDeltaPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`,
-    ],
-  ];
+  const { analysisMinimum: amin, analysisProposed: aprop } = result;
+  if (amin) note(ctx, describeScenario("Se pagassem o mínimo justo", amin));
+  note(ctx, describeScenario("Com a proposta atual", aprop));
+  const deltaText = (delta: number, pct: number) => clean(`${formatDelta(delta)} (${formatPct(pct)})`);
   table(
     ctx,
-    ["Cenário", "Custo da empresa", "Seus custos"],
+    ["", "Como CLT", "PJ no mínimo", "PJ na proposta"],
     [
-      ...(result.analysisMinimum ? analysisRows("Mínimo justo", result.analysisMinimum) : []),
-      ...analysisRows("Proposta atual", result.analysisProposed),
+      ["Custo para a empresa", money(aprop.employerClt), amin ? money(amin.employerPj) : "—", money(aprop.employerPj)],
+      ["variação", "—", amin ? deltaText(amin.employerDelta, amin.employerDeltaPct) : "—", deltaText(aprop.employerDelta, aprop.employerDeltaPct)],
+      ["Seus custos", money(aprop.workerClt), amin ? money(amin.workerPj) : "—", money(aprop.workerPj)],
+      ["variação", "—", amin ? deltaText(amin.workerDelta, amin.workerDeltaPct) : "—", deltaText(aprop.workerDelta, aprop.workerDeltaPct)],
     ],
-    { money: [1, 2] },
+    { money: [1, 2, 3] },
   );
 
   // ---------- contrato ----------

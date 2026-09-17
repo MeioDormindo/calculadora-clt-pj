@@ -1,76 +1,77 @@
 import type { CostAnalysis, ComparisonResult } from "../../lib/calc/types";
 import { formatCurrency } from "../../lib/format";
+import { describeScenario, formatDelta, formatPct } from "../../lib/costAnalysisText";
 
-const formatPct = (value: number) =>
-  `${value > 0 ? "+" : ""}${value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+function DeltaCell({ data, kind }: { data: CostAnalysis | null; kind: "employer" | "worker" }) {
+  if (!data) return <td className="empty">—</td>;
+  const delta = kind === "employer" ? data.employerDelta : data.workerDelta;
+  const pct = kind === "employer" ? data.employerDeltaPct : data.workerDeltaPct;
+  // A coluna da empresa fica neutra de propósito: economia para ela não é ganho
+  // para quem lê. Só o impacto em você recebe cor.
+  const className = kind === "worker" ? (delta <= 0 ? "good" : "bad") : undefined;
+  return (
+    <td className={className}>
+      {formatDelta(delta)} <span className="delta-pct">({formatPct(pct)})</span>
+    </td>
+  );
+}
 
-const formatDelta = (value: number) =>
-  `${value > 0 ? "+" : ""}${formatCurrency(value)}`;
+export function CostAnalysisPanel({ result }: { result: ComparisonResult }) {
+  const { analysisMinimum: min, analysisProposed: prop } = result;
 
-function AnalysisBlock({ title, subtitle, data }: { title: string; subtitle: string; data: CostAnalysis }) {
   return (
     <section className="card analysis">
-      <h3 className="card-title">{title}</h3>
-      <p className="card-subtitle">{subtitle}</p>
+      <h3 className="card-title">Empresa vs você</h3>
+      <ul className="analysis-summary">
+        {min && <li>{describeScenario("Se pagassem o mínimo justo", min)}</li>}
+        <li>{describeScenario("Com a proposta atual", prop)}</li>
+      </ul>
 
+      <p className="scroll-hint">Deslize a tabela para o lado para ver a proposta →</p>
       <div className="table-scroll">
         <table className="comparison-table">
           <thead>
             <tr>
               <th />
-              <th>Empresa</th>
-              <th>Você</th>
+              <th>Como CLT</th>
+              <th>PJ no mínimo</th>
+              <th>PJ na proposta</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <th scope="row">Como CLT</th>
-              <td>{formatCurrency(data.employerClt)}</td>
-              <td>{formatCurrency(data.workerClt)}</td>
+              <th scope="row">Custo para a empresa</th>
+              <td>{formatCurrency(prop.employerClt)}</td>
+              <td>{min ? formatCurrency(min.employerPj) : "—"}</td>
+              <td>{formatCurrency(prop.employerPj)}</td>
+            </tr>
+            <tr className="delta-row">
+              <th scope="row">variação</th>
+              <td className="empty">—</td>
+              <DeltaCell data={min} kind="employer" />
+              <DeltaCell data={prop} kind="employer" />
             </tr>
             <tr>
-              <th scope="row">Como PJ</th>
-              <td>{formatCurrency(data.employerPj)}</td>
-              <td>{formatCurrency(data.workerPj)}</td>
+              <th scope="row">Seus custos</th>
+              <td>{formatCurrency(prop.workerClt)}</td>
+              <td>{min ? formatCurrency(min.workerPj) : "—"}</td>
+              <td>{formatCurrency(prop.workerPj)}</td>
             </tr>
-            {/* A coluna da empresa fica neutra de propósito: economia para ela
-                não é ganho para quem lê. Só o impacto em você recebe cor. */}
-            <tr>
-              <th scope="row">Variação</th>
-              <td>{formatDelta(data.employerDelta)}</td>
-              <td className={data.workerDelta <= 0 ? "good" : "bad"}>
-                {formatDelta(data.workerDelta)}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Variação %</th>
-              <td>{formatPct(data.employerDeltaPct)}</td>
-              <td className={data.workerDelta <= 0 ? "good" : "bad"}>
-                {formatPct(data.workerDeltaPct)}
-              </td>
+            <tr className="delta-row">
+              <th scope="row">variação</th>
+              <td className="empty">—</td>
+              <DeltaCell data={min} kind="worker" />
+              <DeltaCell data={prop} kind="worker" />
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
-  );
-}
 
-export function CostAnalysisPanel({ result }: { result: ComparisonResult }) {
-  return (
-    <div className="analysis-grid">
-      {result.analysisMinimum && (
-        <AnalysisBlock
-          title="Se pagassem o mínimo justo"
-          subtitle="Mesmo pagando o valor que te deixa no zero a zero, a empresa ainda economiza."
-          data={result.analysisMinimum}
-        />
-      )}
-      <AnalysisBlock
-        title="Com a proposta atual"
-        subtitle="Quanto cada lado ganha ou perde no valor que foi oferecido."
-        data={result.analysisProposed}
-      />
-    </div>
+      <p className="group-note analysis-note">
+        Seus custos: no CLT, INSS, IRRF e seus descontos no holerite; no PJ, impostos, benefícios
+        que você passa a pagar, contador e dias sem faturar. O mínimo não depende da proposta — só
+        do CLT e dos custos do PJ.
+      </p>
+    </section>
   );
 }
