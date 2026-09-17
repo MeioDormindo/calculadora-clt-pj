@@ -156,32 +156,32 @@ describe("CLT completo (salário R$ 10.000)", () => {
 });
 
 describe("holerite do mês", () => {
-  // Valores de um holerite real (agosto/2026), usados só como números.
+  // Salário 4.000, ajuda de custo 150, desconto do plano 300, sem VT.
   const holerite = calculateClt({
     ...sheetClt,
-    grossSalary: 3980.02,
+    grossSalary: 4000,
     transportVoucher: 0,
-    healthPlanEmployeeShare: 341.55,
-    allowance: 100,
+    healthPlanEmployeeShare: 300,
+    allowance: 150,
   }).payslip;
 
-  it("INSS bate com o holerite (diferença de centavo é arredondamento da folha)", () => {
-    // Holerite: 366,19. Faixa a faixa exato: 366,2022.
-    expect(holerite.inss).toBeCloseTo(366.19, 1);
+  it("INSS faixa a faixa", () => {
+    // 1621 x 7,5% + 1281,84 x 9% + 1097,16 x 12% = 368,60.
+    expect(holerite.inss).toBeCloseTo(368.6, 1);
   });
 
-  it("IRRF zerado abaixo de R$ 5.000, como no holerite", () => {
+  it("IRRF zerado abaixo de R$ 5.000", () => {
     expect(holerite.irrf).toBeCloseTo(0, 6);
   });
 
-  it("FGTS do mês bate com o holerite", () => {
-    expect(holerite.fgts).toBeCloseTo(318.4, 2);
+  it("FGTS do mês é 8% do salário, sem a ajuda de custo", () => {
+    expect(holerite.fgts).toBeCloseTo(320, 2);
   });
 
-  it("vencimentos, descontos e líquido batem com o holerite", () => {
-    expect(holerite.totalEarnings).toBeCloseTo(4080.02, 2);
-    expect(holerite.totalDiscounts).toBeCloseTo(707.74, 1);
-    expect(holerite.net).toBeCloseTo(3372.28, 1);
+  it("vencimentos, descontos e líquido", () => {
+    expect(holerite.totalEarnings).toBeCloseTo(4150, 2);
+    expect(holerite.totalDiscounts).toBeCloseTo(668.6, 1);
+    expect(holerite.net).toBeCloseTo(3481.4, 1);
   });
 
   it("desconta o VT até 6% do salário", () => {
