@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { usePersistedState } from "./hooks/usePersistedState";
 import { compareCltVsPj } from "./lib/calc/compare";
-import type { CltInput, PjInput } from "./lib/calc/types";
+import { createDefaultState, type AppState } from "./lib/defaults";
 import { formatCurrency } from "./lib/format";
 import { CltInputs } from "./components/InputForm/CltInputs";
 import { PjInputs } from "./components/InputForm/PjInputs";
@@ -20,61 +20,11 @@ import { Donate } from "./components/Layout/Donate";
 import { Tabs } from "./components/Layout/Tabs";
 import { AccountantsPage } from "./components/Accountants/AccountantsPage";
 import { useHashTab } from "./hooks/useHashTab";
+import { ResetButton } from "./components/InputForm/ResetButton";
 
-interface AppState {
-  clt: CltInput;
-  pj: PjInput;
-}
-
-const defaultState: AppState = {
-  clt: {
-    grossSalary: 10000,
-    dependents: 0,
-    vacationBonus: null,
-    thirteenth: null,
-    fgts: null,
-    fgtsFine: null,
-    priorNotice: null,
-    profitSharing: null,
-    transportVoucher: 600,
-    mealVoucher: 600,
-    healthPlan: 2800,
-    otherBenefits: 0,
-    maternityAid: 500,
-    healthPlanEmployeeShare: 0,
-    allowance: 0,
-    externalIncome: 0,
-    employerInss: null,
-    rat: null,
-    sistemaS: null,
-  },
-  pj: {
-    proposedGross: 15000,
-    activity: "TI",
-    taxRegime: "SIMPLES_III",
-    manualTaxRatePct: 6,
-    inssMode: "FATOR_R",
-    customInssRatePct: 11,
-    customInssBase: 0,
-    accountantFee: 600,
-    lifeInsurance: 300,
-    billingMode: "MONTHLY",
-    monthlyHours: 160,
-    hoursPerDay: 8,
-    contractMonths: 12,
-    contractStart: null,
-    includeOptionalHolidays: true,
-    localHolidaysPerYear: 0,
-    sickDaysPerYear: 5,
-    vacationDaysPerYear: 20,
-    paidHolidays: false,
-    paidSickDays: false,
-    paidVacationDays: 0,
-  },
-};
 
 function App() {
-  const [state, setState] = usePersistedState<AppState>(defaultState);
+  const [state, setState, resetState] = usePersistedState<AppState>(createDefaultState);
   const resultsRef = useRef<HTMLDivElement>(null);
   const tab = useHashTab();
 
@@ -89,6 +39,7 @@ function App() {
         <AccountantsPage />
       ) : (
         <>
+          <ResetButton onReset={resetState} />
           <main className="input-grid">
             <CltInputs value={state.clt} onChange={(clt) => setState({ ...state, clt })} />
             <PjInputs value={state.pj} onChange={(pj) => setState({ ...state, pj })} />
@@ -115,11 +66,13 @@ function App() {
       {tab === "calculadora" && (
         <div className="sticky-bar">
           <div>
-            <p className="label">PJ precisa faturar</p>
+            <p className="label">
+              {result.goalExtra > 0 ? "PJ precisa faturar (meta)" : "PJ precisa faturar"}
+            </p>
             <p className="value">
-              {result.minimumGross === null
+              {result.goalGross === null
                 ? "Fora do alcance"
-                : `${formatCurrency(result.minimumGross)}/mês`}
+                : `${formatCurrency(result.goalGross)}/mês`}
             </p>
           </div>
           <button

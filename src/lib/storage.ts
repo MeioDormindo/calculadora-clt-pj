@@ -10,6 +10,14 @@ export function saveToStorage<T>(data: T): void {
   }
 }
 
+export function clearStorage(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage indisponível — nada a limpar.
+  }
+}
+
 export function loadFromStorage<T>(): Partial<T> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

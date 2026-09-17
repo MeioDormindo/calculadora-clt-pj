@@ -175,12 +175,6 @@ export const PJ_INSS_PRESETS: PjInssPreset[] = [
   },
 ];
 
-export const DEFAULT_ACCOUNTANT_FEE = 200;
-export const DEFAULT_WORKING_DAYS_PER_MONTH = 22;
-export const DEFAULT_HOLIDAYS_PER_YEAR = 12;
-export const DEFAULT_SICK_DAYS_PER_YEAR = 5;
-export const DEFAULT_VACATION_DAYS_PER_YEAR = 20;
-
 // Fração mínima de pró-labore sobre o faturamento para serviços sujeitos ao
 // Fator R saírem do Anexo V e ficarem no Anexo III.
 export const FATOR_R_MIN = 0.28;

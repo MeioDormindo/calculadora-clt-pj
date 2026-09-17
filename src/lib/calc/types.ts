@@ -73,6 +73,10 @@ export interface CltInput {
 
 export interface PjInput {
   proposedGross: number;
+  /** Meta como PJ: só empatar, ganhar um valor líquido a mais ou uma porcentagem a mais. */
+  goalMode: "NONE" | "AMOUNT" | "PERCENT";
+  goalAmount: number;
+  goalPercent: number;
   /** Atividade escolhida; define regime e INSS, exceto em "CUSTOM". */
   activity: string;
   taxRegime: PjTaxRegimeId;
@@ -218,6 +222,14 @@ export interface CostAnalysis {
 
 export interface ComparisonResult {
   calendar: ContractCalendar;
+  /** Quanto a mais por mês a meta pede sobre a média do CLT (0 = só empatar). */
+  goalExtra: number;
+  /** Líquido mensal que o PJ precisa sobrar: média do CLT + meta. */
+  goalNet: number;
+  /** Faturamento para atingir a meta; igual ao mínimo quando não há meta. */
+  goalGross: number | null;
+  /** Resultado PJ faturando goalGross; igual a `minimum` quando não há meta. */
+  goal: PjResult | null;
   clt: CltResult;
   minimum: PjResult | null;
   proposed: PjResult;

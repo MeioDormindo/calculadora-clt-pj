@@ -25,6 +25,9 @@ export const sheetClt: CltInput = {
 
 export const sheetPj: PjInput = {
   proposedGross: 15000,
+  goalMode: "NONE",
+  goalAmount: 0,
+  goalPercent: 0,
   activity: "CUSTOM",
   taxRegime: "SIMPLES_III",
   manualTaxRatePct: 6,

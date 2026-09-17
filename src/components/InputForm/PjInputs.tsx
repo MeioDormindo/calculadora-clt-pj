@@ -85,6 +85,39 @@ export function PjInputs({ value, onChange }: PjInputsProps) {
       />
 
       <SelectField
+        label="Sua meta como PJ"
+        value={value.goalMode}
+        options={[
+          { id: "NONE", label: "Só empatar com o CLT" },
+          { id: "AMOUNT", label: "Ganhar um valor líquido a mais" },
+          { id: "PERCENT", label: "Ganhar uma porcentagem a mais" },
+        ]}
+        onChange={(v) => setField("goalMode", v)}
+        hint={
+          value.goalMode === "NONE"
+            ? "O resultado mostra o faturamento que deixa o PJ igual ao CLT."
+            : "A meta é somada à média mensal líquida do CLT (com 13º e 1/3 de férias)."
+        }
+      />
+      {value.goalMode === "AMOUNT" && (
+        <Field
+          label="Líquido a mais por mês"
+          prefix="R$"
+          value={value.goalAmount}
+          onChange={(v) => setField("goalAmount", v)}
+        />
+      )}
+      {value.goalMode === "PERCENT" && (
+        <Field
+          label="Porcentagem a mais sobre o líquido do CLT"
+          suffix="%"
+          max={1000}
+          value={value.goalPercent}
+          onChange={(v) => setField("goalPercent", v)}
+        />
+      )}
+
+      <SelectField
         label="Como esse valor é pago"
         value={value.billingMode}
         options={[

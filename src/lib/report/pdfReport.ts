@@ -132,11 +132,42 @@ export async function downloadPdfReport(
     ...(minimum?.billing.hourlyRate != null
       ? ([["Equivale a, por hora", money(minimum.billing.hourlyRate)]] as [string, string][])
       : []),
+    ...(result.goalExtra > 0
+      ? ([
+          [
+            `Meta: ${money(result.goalExtra)} líquidos a mais por mês${
+              pjInput.goalMode === "PERCENT"
+                ? ` (${pjInput.goalPercent.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% sobre o CLT)`
+                : ""
+            }`,
+            `sobrar ${money(result.goalNet)} por mês`,
+          ],
+          [
+            "PJ precisa faturar por mês para a meta",
+            result.goalGross === null ? "Fora do alcance (acima de R$ 200.000)" : money(result.goalGross),
+          ],
+          ...(result.goal?.billing.hourlyRate != null
+            ? [["Meta equivale a, por hora", money(result.goal.billing.hourlyRate)]]
+            : []),
+        ] as [string, string][])
+      : []),
     ["Proposta PJ por mês", money(proposed.grossInvoice)],
     [
       "Proposta em relação ao mínimo",
       gap === null ? "—" : `${gap >= 0 ? "acima" : "abaixo"} em ${money(Math.abs(gap))}`,
     ],
+    ...(result.goalExtra > 0
+      ? ([
+          [
+            "Proposta em relação à meta",
+            result.goalGross === null
+              ? "—"
+              : `${proposed.grossInvoice >= result.goalGross ? "acima" : "abaixo"} em ${money(
+                  Math.abs(proposed.grossInvoice - result.goalGross),
+                )}`,
+          ],
+        ] as [string, string][])
+      : []),
     ["CLT: líquido no holerite (mês comum)", money(clt.payslip.net)],
     ...(clt.externalIncome > 0
       ? ([["CLT: líquido com o recebido por fora", money(clt.monthlyInPocket)]] as [string, string][])

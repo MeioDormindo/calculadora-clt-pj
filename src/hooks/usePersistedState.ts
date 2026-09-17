@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
-import { loadFromStorage, saveToStorage } from "../lib/storage";
+import { useCallback, useEffect, useState } from "react";
+import { clearStorage, loadFromStorage, saveToStorage } from "../lib/storage";
 
-export function usePersistedState<T>(defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+/** Igual ao padrão não precisa ser guardado: assim o padrão atual sempre vale. */
+export function isDefaultState<T>(state: T, defaults: T): boolean {
+  return JSON.stringify(state) === JSON.stringify(defaults);
+}
+
+export function usePersistedState<T>(
+  createDefault: () => T,
+): [T, React.Dispatch<React.SetStateAction<T>>, () => void] {
   const [state, setState] = useState<T>(() => {
+    const defaultValue = createDefault();
     const stored = loadFromStorage<T>();
     if (!stored) return defaultValue;
 
@@ -20,8 +28,14 @@ export function usePersistedState<T>(defaultValue: T): [T, React.Dispatch<React.
   });
 
   useEffect(() => {
-    saveToStorage(state);
-  }, [state]);
+    if (isDefaultState(state, createDefault())) clearStorage();
+    else saveToStorage(state);
+  }, [state, createDefault]);
 
-  return [state, setState];
+  const reset = useCallback(() => {
+    clearStorage();
+    setState(createDefault());
+  }, [createDefault]);
+
+  return [state, setState, reset];
 }

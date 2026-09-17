@@ -41,10 +41,31 @@ export function compareCltVsPj(
   const minimumGross = findMinimumPjGross(clt, pjInput, calendar);
   const minimum = minimumGross === null ? null : calculatePj(minimumGross, pjInput, clt, calendar);
 
+  // Meta sobre a média mensal do CLT, a mesma base de todo o comparativo.
+  const goalExtra =
+    pjInput.goalMode === "AMOUNT"
+      ? Math.max(0, pjInput.goalAmount)
+      : pjInput.goalMode === "PERCENT"
+        ? Math.max(0, (clt.netEffective * pjInput.goalPercent) / 100)
+        : 0;
+  const goalNet = clt.netEffective + goalExtra;
+  const goalGross =
+    goalExtra > 0 ? findMinimumPjGross(clt, pjInput, calendar, { target: goalNet }) : minimumGross;
+  const goal =
+    goalExtra > 0
+      ? goalGross === null
+        ? null
+        : calculatePj(goalGross, pjInput, clt, calendar)
+      : minimum;
+
   const proposalDelta = proposed.netEffective - clt.netEffective;
 
   return {
     calendar,
+    goalExtra,
+    goalNet,
+    goalGross,
+    goal,
     clt,
     minimum,
     proposed,
