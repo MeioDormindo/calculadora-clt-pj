@@ -6,7 +6,7 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
   const { clt, proposed, proposalDelta, proposalDeltaPct } = result;
   const worseOff = proposalDelta < 0;
 
-  const cltNet = useAnimatedNumber(clt.netEffective);
+  const cltPayslip = useAnimatedNumber(clt.payslip.net);
   const pjNet = useAnimatedNumber(proposed.netEffective);
   const delta = useAnimatedNumber(proposalDelta);
 
@@ -20,23 +20,25 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
         <article className="tile">
           <p className="tile-label">
             <span className="dot clt" />
-            CLT hoje
+            CLT · líquido no holerite
           </p>
-          <p className="tile-value">{formatCurrency(cltNet)}</p>
-          <p className="tile-meta">líquida efetiva por mês</p>
+          <p className="tile-value">{formatCurrency(cltPayslip)}</p>
+          <p className="tile-meta">
+            com 13º e 1/3 de férias: {formatCurrency(clt.netEffective)}/mês na média do ano
+          </p>
         </article>
 
         <article className="tile">
           <p className="tile-label">
             <span className="dot pj" />
-            PJ na proposta
+            PJ · sobra por mês
           </p>
           <p className="tile-value">{formatCurrency(pjNet)}</p>
-          <p className="tile-meta">líquida efetiva por mês</p>
+          <p className="tile-meta">depois de impostos, benefícios que você paga e dias parados</p>
         </article>
 
         <article className="tile">
-          <p className="tile-label">Variação da proposta</p>
+          <p className="tile-label">Proposta vs CLT (média do ano)</p>
           <p className="tile-value">{formatCurrency(Math.abs(delta))}</p>
           <span className={`tile-delta ${worseOff ? "bad" : "good"}`}>
             {worseOff ? "▼" : "▲"}{" "}
@@ -47,9 +49,10 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
       </div>
 
       <section className="card">
-        <h3 className="card-title">Remuneração líquida efetiva</h3>
+        <h3 className="card-title">Quanto sobra por mês, na média do ano</h3>
         <p className="card-subtitle">
-          O que sobra no seu bolso depois de impostos e de bancar o que a empresa bancava.
+          É a base justa de comparação: no CLT entram 13º e 1/3 de férias, que o PJ não tem; no
+          PJ saem impostos, os benefícios que você passa a pagar e os dias sem faturar.
         </p>
 
         <div className="meter">
@@ -57,7 +60,7 @@ export function ComparisonSummary({ result }: { result: ComparisonResult }) {
             <div className="meter-head">
               <span className="meter-key">
                 <span className="dot clt" />
-                CLT hoje
+                CLT (média com 13º e férias)
               </span>
               <span className="meter-value">{formatCurrency(clt.netEffective)}</span>
             </div>

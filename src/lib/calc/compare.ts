@@ -9,16 +9,17 @@ function pct(delta: number, base: number): number {
 
 function analyse(clt: CltResult, pj: PjResult): CostAnalysis {
   const employerDelta = pj.employerCost - clt.employerCost;
-  const workerDelta = pj.totalCosts - clt.totalCosts;
+  const workerClt = clt.totalCosts + clt.totalEmployeeShares;
+  const workerDelta = pj.totalCosts - workerClt;
   return {
     employerClt: clt.employerCost,
     employerPj: pj.employerCost,
     employerDelta,
     employerDeltaPct: pct(employerDelta, clt.employerCost),
-    workerClt: clt.totalCosts,
+    workerClt,
     workerPj: pj.totalCosts,
     workerDelta,
-    workerDeltaPct: pct(workerDelta, clt.totalCosts),
+    workerDeltaPct: pct(workerDelta, workerClt),
   };
 }
 

@@ -5,7 +5,7 @@ const pct = (part: number, whole: number) =>
   whole > 0 ? `${((part / whole) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%` : "";
 
 export function PayslipCard({ result }: { result: ComparisonResult }) {
-  const { payslip, netEffective } = result.clt;
+  const { payslip, netEffective, thirteenthNet, vacationBonusNet, externalIncome } = result.clt;
 
   const rows = [
     { label: "Salário", reference: "30/30", earning: payslip.salary, discount: 0 },
@@ -20,9 +20,8 @@ export function PayslipCard({ result }: { result: ComparisonResult }) {
     <section className="card">
       <h3 className="card-title">Seu holerite do mês (CLT)</h3>
       <p className="card-subtitle">
-        Para conferir com o seu holerite de um mês comum. A comparação com o PJ usa a{" "}
-        <strong>média do ano</strong> ({formatCurrency(netEffective)}/mês), que soma 13º, 1/3 de
-        férias, FGTS e benefícios — por isso os dois valores são diferentes.
+        Deve bater com o líquido do seu holerite num mês comum, sem 13º nem férias. Mais abaixo, a
+        conta que leva deste valor à média usada na comparação com o PJ.
       </p>
 
       <div className="table-scroll">
@@ -61,6 +60,38 @@ export function PayslipCard({ result }: { result: ComparisonResult }) {
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      <div className="payslip-bridge">
+        <p className="payslip-bridge-title">Do holerite à média mensal do ano</p>
+        <dl>
+          <div>
+            <dt>Líquido no holerite</dt>
+            <dd>{formatCurrency(payslip.net)}</dd>
+          </div>
+          <div>
+            <dt>+ 13º líquido ({formatCurrency(thirteenthNet)} ÷ 12)</dt>
+            <dd>{formatCurrency(thirteenthNet / 12)}</dd>
+          </div>
+          <div>
+            <dt>+ 1/3 de férias líquido ({formatCurrency(vacationBonusNet)} ÷ 12)</dt>
+            <dd>{formatCurrency(vacationBonusNet / 12)}</dd>
+          </div>
+          {externalIncome > 0 && (
+            <div>
+              <dt>+ recebido por fora</dt>
+              <dd>{formatCurrency(externalIncome)}</dd>
+            </div>
+          )}
+          <div className="total">
+            <dt>= Média mensal usada na comparação</dt>
+            <dd>{formatCurrency(netEffective)}</dd>
+          </div>
+        </dl>
+        <p className="payslip-note">
+          FGTS e benefícios não entram aqui: eles aparecem do lado PJ, como custo que você passa a
+          ter.
+        </p>
       </div>
 
       <p className="payslip-fgts">

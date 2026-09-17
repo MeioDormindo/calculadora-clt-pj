@@ -213,3 +213,25 @@ describe("ajuda de custo e sua parte do plano", () => {
     expect(comCoparticipacao.employerCost).toBeCloseTo(base.employerCost, 6);
   });
 });
+
+describe("do holerite à média do ano", () => {
+  const cenarios = [
+    { grossSalary: 4000, allowance: 150, healthPlanEmployeeShare: 300, transportVoucher: 0, externalIncome: 0 },
+    { grossSalary: 6200, allowance: 0, healthPlanEmployeeShare: 0, transportVoucher: 500, externalIncome: 0 },
+    { grossSalary: 12000, allowance: 200, healthPlanEmployeeShare: 450, transportVoucher: 900, externalIncome: 800, dependents: 2 },
+  ];
+
+  it("média = holerite + (13º líquido + 1/3 de férias líquido) ÷ 12 + recebido por fora", () => {
+    for (const c of cenarios) {
+      const r = calculateClt({ ...sheetClt, ...c });
+      const reconstruida = r.payslip.net + (r.thirteenthNet + r.vacationBonusNet) / 12 + r.externalIncome;
+      expect(r.netEffective).toBeCloseTo(reconstruida, 6);
+    }
+  });
+
+  it("13º líquido desconta o INSS do 13º e não tem desconto simplificado", () => {
+    // 4.000: INSS 368,60. Base 3.631,40 -> 15% - 394,16 = 150,55, zerado pela redução (até 5 mil).
+    const r = calculateClt({ ...sheetClt, ...cenarios[0] });
+    expect(r.thirteenthNet).toBeCloseTo(4000 - 368.6, 1);
+  });
+});

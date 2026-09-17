@@ -116,6 +116,10 @@ export interface CltResult {
   grossSalary: number;
   dependents: number;
   payslip: Payslip;
+  /** 13º líquido no ano (depois do INSS e do IRRF dele). */
+  thirteenthNet: number;
+  /** 1/3 de férias líquido no ano: o 1/3 menos o INSS e o IRRF a mais do mês de férias. */
+  vacationBonusNet: number;
   allowance: number;
   /** Descontos seus no holerite (plano de saúde, vale-transporte). */
   employeeShares: Line[];

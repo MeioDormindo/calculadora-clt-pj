@@ -111,3 +111,13 @@ describe("descontos seus e ajuda de custo no valor mínimo", () => {
     expect(comAjuda!).toBeGreaterThan(semAjuda!);
   });
 });
+
+describe("empresa vs você com descontos seus", () => {
+  it("seu desconto do plano conta como custo seu nos dois regimes", () => {
+    const semDesconto = compareCltVsPj(sheetClt, sheetPj).analysisProposed;
+    const comDesconto = compareCltVsPj({ ...sheetClt, healthPlanEmployeeShare: 300 }, sheetPj).analysisProposed;
+    expect(comDesconto.workerClt).toBeCloseTo(semDesconto.workerClt + 300, 6);
+    expect(comDesconto.workerPj).toBeCloseTo(semDesconto.workerPj + 300, 6);
+    expect(comDesconto.workerDelta).toBeCloseTo(semDesconto.workerDelta, 6);
+  });
+});

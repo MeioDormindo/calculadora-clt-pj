@@ -181,6 +181,12 @@ export function calculateClt(input: CltInput): CltResult {
   // empresa desembolsa do mesmo jeito — entra nos dois lados da conta.
   const externalIncome = input.externalIncome;
 
+  // A média mensal é o holerite de um mês comum mais estes dois valores
+  // divididos por 12 — é o que liga os dois números mostrados na tela.
+  const thirteenthNet = thirteenthPayment - inssThirteenth - irrfThirteenth;
+  const vacationBonusNet =
+    vacationBonus * 12 - (inssVacation - inssRegular) - (irrfVacation - irrfRegular);
+
   const payslipDiscounts =
     inssRegular + irrfRegular + input.healthPlanEmployeeShare + transportVoucherDiscount;
   const payslip: Payslip = {
@@ -200,6 +206,8 @@ export function calculateClt(input: CltInput): CltResult {
     grossSalary,
     dependents,
     payslip,
+    thirteenthNet,
+    vacationBonusNet,
     allowance,
     employeeShares,
     totalEmployeeShares,
