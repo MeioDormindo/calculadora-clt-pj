@@ -12,11 +12,13 @@ interface RescissionInputsProps {
   clt: CltInput;
   value: RescissionInput;
   estimatedFgts: number;
+  /** Máximo de dias de férias vencidas pelo tempo de casa; null sem datas válidas. */
+  vacationDaysLimit: number | null;
   onCltChange: (clt: CltInput) => void;
   onChange: (value: RescissionInput) => void;
 }
 
-export function RescissionInputs({ clt, value, estimatedFgts, onCltChange, onChange }: RescissionInputsProps) {
+export function RescissionInputs({ clt, value, estimatedFgts, vacationDaysLimit, onCltChange, onChange }: RescissionInputsProps) {
   function setField<K extends keyof RescissionInput>(key: K, fieldValue: RescissionInput[K]) {
     onChange({ ...value, [key]: fieldValue });
   }
@@ -90,11 +92,18 @@ export function RescissionInputs({ clt, value, estimatedFgts, onCltChange, onCha
         <p className="card-subtitle">Ajuste o que souber; o resto é estimado.</p>
 
         <Field
-          label="Períodos de férias vencidas (não tiradas)"
-          max={3}
-          value={value.expiredVacationPeriods}
-          onChange={(v) => setField("expiredVacationPeriods", Math.round(v))}
-          hint="Cada 12 meses completos de empresa em que você não tirou férias. Com 2 ou mais, as mais antigas são pagas em dobro."
+          label="Dias de férias vencidas (não tiradas)"
+          suffix="dias"
+          value={value.expiredVacationDays}
+          onChange={(v) => setField("expiredVacationDays", Math.round(v))}
+          hint={
+            "Cada 12 meses completos de empresa dão 30 dias. O que passar de 30 é de períodos mais antigos e sai em dobro." +
+            (vacationDaysLimit === null
+              ? ""
+              : vacationDaysLimit === 0
+                ? " Com menos de 1 ano de empresa ainda não há férias vencidas — entram só as proporcionais."
+                : ` Pelo seu tempo de casa, até ${vacationDaysLimit} dias.`)
+          }
         />
 
         <AutoField

@@ -94,7 +94,9 @@ function ServiceCard({ result }: { result: RescissionResult }) {
           <dd>
             {result.type === "PEDIDO"
               ? "30 dias, devidos por você"
-              : `${notice.totalDays} dias (30 + 3 × ${service.years} ${service.years === 1 ? "ano" : "anos"})`}
+              : notice.totalDays === 90
+                ? "90 dias (o máximo, a partir de 20 anos)"
+                : `${notice.totalDays} dias (30 + 3 × ${service.years} ${service.years === 1 ? "ano" : "anos"})`}
           </dd>
         </div>
         {notice.paidDays > 0 && (
@@ -395,6 +397,7 @@ export function RescissionPage({ clt, value, onCltChange, onChange }: Rescission
           clt={clt}
           value={value}
           estimatedFgts={estimate}
+          vacationDaysLimit={outcome.ok ? 30 * outcome.result.service.years : null}
           onCltChange={onCltChange}
           onChange={onChange}
         />

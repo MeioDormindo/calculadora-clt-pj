@@ -14,7 +14,7 @@ const base: RescissionInput = {
   terminationDate: "2026-09-17",
   type: "SEM_JUSTA_CAUSA",
   noticeMode: "INDENIZADO",
-  expiredVacationPeriods: 0,
+  expiredVacationDays: 0,
   fgtsBalance: 10000,
   saqueAniversario: false,
   thirteenthAdvancePaid: false,
@@ -132,12 +132,20 @@ describe("regras de cada tipo", () => {
 });
 
 describe("detalhes", () => {
-  it("férias vencidas: a mais antiga de duas é paga em dobro, com 1/3", () => {
-    const r = calc({ expiredVacationPeriods: 2 });
-    expect(item(r, "ferias-vencidas")).toBe(9000);
-    expect(item(r, "terco-vencidas")).toBe(3000);
-    // Não passa do número de anos completos.
-    expect(item(calc({ expiredVacationPeriods: 3, admissionDate: "2025-01-01" }), "ferias-vencidas")).toBe(3000);
+  it("férias vencidas em dias: os que passam de 30 são pagos em dobro, com 1/3", () => {
+    const r = calc({ expiredVacationDays: 60 });
+    expect(item(r, "ferias-vencidas")).toBeCloseTo(9000, 6);
+    expect(item(r, "terco-vencidas")).toBeCloseTo(3000, 6);
+    expect(item(calc({ expiredVacationDays: 20 }), "ferias-vencidas")).toBeCloseTo(2000, 6);
+    expect(item(calc({ expiredVacationDays: 45 }), "ferias-vencidas")).toBeCloseTo(6000, 6); // 30 + 15 × 2
+    // Não passa de 30 dias por ano completo.
+    expect(item(calc({ expiredVacationDays: 90, admissionDate: "2025-01-01" }), "ferias-vencidas")).toBeCloseTo(3000, 6);
+  });
+
+  it("aviso prévio: 33 dias com 1 ano completo, 30 um dia antes", () => {
+    // Saída em 17/09/2026; de 18/09/2025 a 17/09/2026 é 1 ano inteiro.
+    expect(calc({ admissionDate: "2025-09-18" }).notice.totalDays).toBe(33);
+    expect(calc({ admissionDate: "2025-09-19" }).notice.totalDays).toBe(30);
   });
 
   it("mês com menos de 15 dias não conta avo", () => {

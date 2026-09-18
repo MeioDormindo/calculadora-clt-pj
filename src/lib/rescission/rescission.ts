@@ -40,8 +40,11 @@ export interface RescissionInput {
   terminationDate: string | null;
   type: RescissionType;
   noticeMode: NoticeMode;
-  /** Períodos de 12 meses completos em que as férias não foram tiradas. */
-  expiredVacationPeriods: number;
+  /**
+   * Dias de férias vencidas ainda não tiradas (30 por período de 12 meses
+   * completos). Os que passam de 30 são de períodos mais antigos, pagos em dobro.
+   */
+  expiredVacationDays: number;
   /** Saldo do FGTS deste emprego. null = estimar pelo salário. */
   fgtsBalance: Auto;
   saqueAniversario: boolean;
@@ -311,18 +314,25 @@ export function calculateRescission(
   });
 
   // ---------- férias ----------
-  const expired = Math.min(Math.max(0, Math.round(input.expiredVacationPeriods)), years);
-  const doubled = Math.max(0, expired - 1);
+  // Só o período mais recente ainda está no prazo de 12 meses para tirar; os
+  // dias além dos 30 dele são de períodos anteriores e saem em dobro.
+  const expiredLimit = 30 * years;
+  const expiredAsked = Math.max(0, Math.round(input.expiredVacationDays));
+  const expired = Math.min(expiredAsked, expiredLimit);
+  const doubled = Math.max(0, expired - 30);
   if (expired > 0) {
-    const value = salary * (expired + doubled);
+    const value = daily * (expired + doubled);
     earnings.push({
       key: "ferias-vencidas",
       label: "Férias vencidas",
       value,
       detail:
-        `${plural(expired, "período completo", "períodos completos")} sem tirar férias × ${formatCurrency(salary)}` +
+        `${plural(expired, "dia", "dias")} sem tirar × ${formatCurrency(daily)} por dia (salário ÷ 30)` +
         (doubled > 0
-          ? `; ${doubled === 1 ? "o mais antigo passou" : `os ${doubled} mais antigos passaram`} do prazo de 12 meses para tirar e ${doubled === 1 ? "é pago" : "são pagos"} em dobro (art. 137 da CLT)`
+          ? `; ${plural(doubled, "dia passou", "dias passaram")} do prazo de 12 meses para tirar e ${doubled === 1 ? "é pago" : "são pagos"} em dobro (art. 137 da CLT)`
+          : "") +
+        (expiredAsked > expired
+          ? `. Limitado a ${expiredLimit} dias: 30 por ano completo de empresa`
           : ""),
     });
     earnings.push({
@@ -412,7 +422,7 @@ export function calculateRescission(
   // anteriores e do 1/3 das férias já tiradas. Não inclui o rendimento da conta.
   const monthsBeforeLastMonth = span.months + span.days / 30 - salaryDays / 30;
   const monthsBeforeThisYear = Math.max(0, completeMonths(admission, addDays(yearStart, -1)).months);
-  const vacationsTaken = Math.max(0, years - expired);
+  const vacationsTaken = Math.max(0, years - expired / 30);
   const estimatedBalance =
     FGTS_RATE * salary * (Math.max(0, monthsBeforeLastMonth) + monthsBeforeThisYear / 12 + vacationsTaken / 3);
   const balanceEstimated = input.fgtsBalance === null;

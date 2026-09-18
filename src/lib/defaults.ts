@@ -67,7 +67,7 @@ export function createDefaultState(): AppState {
       terminationDate: null,
       type: "SEM_JUSTA_CAUSA",
       noticeMode: "INDENIZADO",
-      expiredVacationPeriods: 0,
+      expiredVacationDays: 0,
       fgtsBalance: null,
       saqueAniversario: false,
       thirteenthAdvancePaid: false,
